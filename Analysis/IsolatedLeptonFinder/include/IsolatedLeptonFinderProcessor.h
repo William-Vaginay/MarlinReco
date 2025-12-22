@@ -24,7 +24,6 @@
 #include <UTIL/LCRelationNavigator.h>
 
 class IsolatedLeptonFinderProcessor : public marlin::Processor {
-
 public:
   virtual Processor* newProcessor() { return new IsolatedLeptonFinderProcessor; }
 
@@ -36,6 +35,10 @@ public:
   virtual void init();
   virtual void processEvent(LCEvent* evt);
   virtual void end();
+
+private:
+  /// Return the original PFO if this particle is a copy, otherwise return itself
+  ReconstructedParticle* findOriginal(ReconstructedParticle* pfo) const;
 
 protected:
   /** Returns true if pfo is a lepton */
@@ -167,6 +170,23 @@ protected:
 
   /** If set to true, uses Pandora particle IDs */
   bool _usePandoraIDs = false;
+
+  /**
+   * Map from internally copied PFOs to their original input PFOs.
+   *
+   * The IsolatedLeptonFinder creates internal copies of ReconstructedParticles
+   * (e.g. for dressing leptons or producing modified output collections).
+   * However, isolation quantities such as the cone energy are defined with
+   * respect to the original input PFO collection.
+   *
+   * Since the copied PFOs are distinct objects, pointer comparisons would
+   * otherwise fail (e.g. when excluding the lepton itself from the cone),
+   * leading to incorrect self-counting in the isolation energy.
+   *
+   * This map is therefore used to recover the association to the original
+   * PFO when computing isolation-related quantities.
+   */
+  std::map<ReconstructedParticle*, ReconstructedParticle*> _copy2orig;
 };
 
 #endif

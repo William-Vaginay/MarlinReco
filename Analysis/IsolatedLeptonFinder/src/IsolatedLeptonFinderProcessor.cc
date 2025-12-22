@@ -22,8 +22,8 @@ using namespace marlin;
 
 IsolatedLeptonFinderProcessor aIsolatedLeptonFinderProcessor;
 
-IsolatedLeptonFinderProcessor::IsolatedLeptonFinderProcessor() : Processor("IsolatedLeptonFinderProcessor") {
-
+IsolatedLeptonFinderProcessor::IsolatedLeptonFinderProcessor()
+    : Processor("IsolatedLeptonFinderProcessor"), _copy2orig() {
   // Processor description
   _description = "Isolated Lepton Finder Processor";
 
@@ -180,7 +180,16 @@ void IsolatedLeptonFinderProcessor::init() {
   printParameters();
 }
 
+ReconstructedParticle* IsolatedLeptonFinderProcessor::findOriginal(ReconstructedParticle* pfo) const {
+  const auto it = _copy2orig.find(pfo);
+  if (it != _copy2orig.end()) {
+    return it->second;
+  }
+  return pfo;
+}
+
 void IsolatedLeptonFinderProcessor::processEvent(LCEvent* evt) {
+  _copy2orig.clear(); // Clear copy-origin map
 
   streamlog_out(DEBUG) << std::endl;
   streamlog_out(DEBUG) << "processing event: " << evt->getEventNumber() << "   in run:  " << evt->getRunNumber()
@@ -238,6 +247,7 @@ void IsolatedLeptonFinderProcessor::processEvent(LCEvent* evt) {
     ReconstructedParticle* pfo_tmp =
         static_cast<ReconstructedParticle*>(_pfoCol->getElementAt(goodLeptonIndices.at(i)));
     ReconstructedParticleImpl* pfo = CopyReconstructedParticle(pfo_tmp);
+    _copy2orig[pfo] = pfo_tmp; // Map the address copy-original
 
     if (_useDressedLeptons) {
       // don't reprocess merged leptons
@@ -334,9 +344,10 @@ void IsolatedLeptonFinderProcessor::dressLepton(ReconstructedParticleImpl* pfo, 
   }
 }
 void IsolatedLeptonFinderProcessor::end() {}
+
 ReconstructedParticleImpl* IsolatedLeptonFinderProcessor::CopyReconstructedParticle(ReconstructedParticle* pfo_orig) {
-  // copy this in an ugly fashion to be modifiable - a versatile copy constructor would be much better!
   ReconstructedParticleImpl* pfo = new ReconstructedParticleImpl();
+
   pfo->setMomentum(pfo_orig->getMomentum());
   pfo->setEnergy(pfo_orig->getEnergy());
   pfo->setType(pfo_orig->getType());
@@ -346,14 +357,17 @@ ReconstructedParticleImpl* IsolatedLeptonFinderProcessor::CopyReconstructedParti
   pfo->setParticleIDUsed(pfo_orig->getParticleIDUsed());
   pfo->setGoodnessOfPID(pfo_orig->getGoodnessOfPID());
   pfo->setStartVertex(pfo_orig->getStartVertex());
-  for (unsigned int i = 0; i < pfo->getTracks().size(); i++) {
+
+  for (unsigned int i = 0; i < pfo_orig->getTracks().size(); i++) {
     pfo->addTrack(pfo_orig->getTracks()[i]);
   }
-  for (unsigned int i = 0; i < pfo->getClusters().size(); i++) {
+  for (unsigned int i = 0; i < pfo_orig->getClusters().size(); i++) {
     pfo->addCluster(pfo_orig->getClusters()[i]);
   }
+
   return pfo;
 }
+
 bool IsolatedLeptonFinderProcessor::IsCharged(ReconstructedParticle* pfo) {
   if (pfo->getCharge() == 0)
     return false;
@@ -366,7 +380,6 @@ bool IsolatedLeptonFinderProcessor::IsPhoton(ReconstructedParticle* pfo) {
   return false;
 }
 bool IsolatedLeptonFinderProcessor::IsElectron(ReconstructedParticle* pfo) {
-
   if (_usePandoraIDs)
     return (abs(pfo->getType()) == 11);
 
@@ -386,7 +399,6 @@ bool IsolatedLeptonFinderProcessor::IsElectron(ReconstructedParticle* pfo) {
   return false;
 }
 bool IsolatedLeptonFinderProcessor::IsMuon(ReconstructedParticle* pfo) {
-
   if (_usePandoraIDs)
     return (abs(pfo->getType()) == 13);
 
@@ -406,14 +418,12 @@ bool IsolatedLeptonFinderProcessor::IsMuon(ReconstructedParticle* pfo) {
   return false;
 }
 bool IsolatedLeptonFinderProcessor::IsLepton(ReconstructedParticle* pfo) {
-
   if (IsElectron(pfo) || IsMuon(pfo))
     return true;
   return false;
 }
 
 bool IsolatedLeptonFinderProcessor::IsGoodLepton(ReconstructedParticle* pfo) {
-
   if (!IsCharged(pfo))
     return false;
 
@@ -430,7 +440,6 @@ bool IsolatedLeptonFinderProcessor::IsGoodLepton(ReconstructedParticle* pfo) {
 }
 
 bool IsolatedLeptonFinderProcessor::IsIsolatedLepton(ReconstructedParticle* pfo) {
-
   if (_useRectangularIsolation && !IsIsolatedRectangular(pfo))
     return false;
 
@@ -470,26 +479,25 @@ bool IsolatedLeptonFinderProcessor::IsIsolatedPolynomial(ReconstructedParticle* 
 
 bool IsolatedLeptonFinderProcessor::IsIsolatedJet(ReconstructedParticle* pfo) {
   // jet-based isolated lepton (LAL algorithm)
+  ReconstructedParticle* orig = findOriginal(pfo);
 
-  if (_rpJetMap.find(pfo) == _rpJetMap.end()) {
+  if (_rpJetMap.find(orig) == _rpJetMap.end()) {
     // this is often the case when jet finding fails e.g. due to too few particles in event
     return false;
   }
 
-  ReconstructedParticle* jet = _rpJetMap[pfo];
-  TVector3 vec1(pfo->getMomentum());
+  ReconstructedParticle* jet = _rpJetMap[orig];
+  TVector3 vec1(orig->getMomentum());
   TVector3 jetmom(jet->getMomentum());
   TLorentzVector jetmom4(jet->getMomentum(), jet->getEnergy());
 
   float jetxt = vec1.Pt(jetmom) / jetmom4.M();
-  float jetz = pfo->getEnergy() / jet->getEnergy();
+  float jetz = orig->getEnergy() / jet->getEnergy();
 
   if (jetxt >= _jetIsoVetoMinXt && jetxt < _jetIsoVetoMaxXt && jetz >= _jetIsoVetoMinZ && jetz < _jetIsoVetoMaxZ) {
-    // printf("xt=%f z=%f (not pass)\n",jetxt,jetz);
     return false;
   }
 
-  // printf("xt=%f z=%f (PASS)\n",jetxt,jetz);
   return true;
 }
 
@@ -553,19 +561,24 @@ bool IsolatedLeptonFinderProcessor::PassesImpactParameterSignificanceCuts(Recons
 }
 
 float IsolatedLeptonFinderProcessor::getConeEnergy(ReconstructedParticle* pfo) {
-  float coneE = 0;
+  ReconstructedParticle* orig = findOriginal(pfo); // Get the original address
 
-  TVector3 P(pfo->getMomentum());
+  float coneE = 0;
+  TVector3 P(orig->getMomentum());
+
   int npfo = _workingList.size();
   for (int i = 0; i < npfo; i++) {
-    ReconstructedParticle* pfo_i = static_cast<ReconstructedParticle*>(_workingList.at(i));
+    ReconstructedParticle* pfo_i = _workingList[i];
 
     // don't add itself to the cone energy
-    if (pfo == pfo_i)
+    if (pfo_i == orig)
       continue;
 
     TVector3 P_i(pfo_i->getMomentum());
+    if (P.Mag() == 0 || P_i.Mag() == 0)
+      continue;
     float cosTheta = P.Dot(P_i) / (P.Mag() * P_i.Mag());
+
     if (cosTheta >= _cosConeAngle)
       coneE += pfo_i->getEnergy();
   }
