@@ -1,12 +1,7 @@
 #include "SimDigital.h"
 #include "InputTraits.h"
 
-#include <EVENT/LCCollection.h>
 #include <EVENT/MCParticle.h>
-#include <EVENT/SimCalorimeterHit.h>
-#include <IMPL/CalorimeterHitImpl.h>
-#include <IMPL/LCCollectionVec.h>
-#include <IMPL/LCFlagImpl.h>
 #include <IMPL/LCRelationImpl.h>
 #include <marlin/Exceptions.h>
 #include <marlin/Global.h>
@@ -271,13 +266,13 @@ void SimDigitalProcessor<InputTraits>::fillTupleStep(const std::vector<StepAndCh
 }
 
 template <typename InputTraits>
-SimDigitalProcessor<InputTraits>::cellIDHitMap SimDigitalProcessor<InputTraits>::createPotentialOutputHits(LCCollection* col, SimDigitalGeomCellId* aGeomCellId) {
+SimDigitalProcessor<InputTraits>::cellIDHitMap SimDigitalProcessor<InputTraits>::createPotentialOutputHits(collectionType* col, SimDigitalGeomCellId* aGeomCellId) {
   cellIDHitMap myHitMap;
 
   int numElements = col->getNumberOfElements();
 
   for (int j = 0; j < numElements; ++j) {
-    SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>(col->getElementAt(j));
+    simcalohitType* hit = dynamic_cast<simcalohitType*>(col->getElementAt(j));
 
     std::vector<StepAndCharge> steps;
 
@@ -347,7 +342,7 @@ SimDigitalProcessor<InputTraits>::cellIDHitMap SimDigitalProcessor<InputTraits>:
 
     for (const auto& it : chargeSpreader->getChargeMap()) {
       if (it.second >= 0) {
-        std::unique_ptr<CalorimeterHitImpl> tmp = aGeomCellId->encode(it.first.first, it.first.second);
+        std::unique_ptr<calohitType> tmp = aGeomCellId->encode(it.first.first, it.first.second);
 
         if (tmp == nullptr)
           continue;
@@ -420,10 +415,10 @@ void SimDigitalProcessor<InputTraits>::applyThresholds(cellIDHitMap& myHitMap) {
 }
 
 template <typename InputTraits> 
-void SimDigitalProcessor<InputTraits>::processCollection(LCCollection* inputCol, LCCollectionVec*& outputCol, LCCollectionVec*& outputRelCol,
+void SimDigitalProcessor<InputTraits>::processCollection(collectionType* inputCol, collectionVecType*& outputCol, collectionVecType*& outputRelCol,
                                    CHT::Layout layout) {
-  outputCol = new LCCollectionVec(LCIO::CALORIMETERHIT);
-  outputRelCol = new LCCollectionVec(LCIO::LCRELATION);
+  outputCol = new collectionVecType(LCIO::CALORIMETERHIT);
+  outputRelCol = new collectionVecType(LCIO::LCRELATION);
 
   outputCol->setFlag(flag.getFlag());
 
@@ -453,7 +448,7 @@ void SimDigitalProcessor<InputTraits>::processCollection(LCCollection* inputCol,
     hitMemory& currentHitMem = it->second;
     if (currentHitMem.rawHit != -1) {
       streamlog_out(DEBUG) << " rawHit= " << currentHitMem.rawHit << std::endl;
-      SimCalorimeterHit* hitraw = dynamic_cast<SimCalorimeterHit*>(inputCol->getElementAt(currentHitMem.rawHit));
+      simcalohitType* hitraw = dynamic_cast<simcalohitType*>(inputCol->getElementAt(currentHitMem.rawHit));
       currentHitMem.ahit->setRawHit(hitraw);
     }
 
@@ -461,7 +456,7 @@ void SimDigitalProcessor<InputTraits>::processCollection(LCCollection* inputCol,
     outputCol->addElement(caloHit);
 
     // put only one relation with the SimCalorimeterHit which contributes most
-    SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>(inputCol->getElementAt(currentHitMem.rawHit));
+    simcalohitType* hit = dynamic_cast<simcalohitType*>(inputCol->getElementAt(currentHitMem.rawHit));
     LCRelationImpl* rel = new LCRelationImpl(caloHit, hit, 1.0);
     outputRelCol->addElement(rel);
 
@@ -491,12 +486,12 @@ void SimDigitalProcessor<InputTraits>::processEvent(eventType* evt) {
       std::string outputColName = _outputCollections.at(i);
       std::string outputRelColName = _outputRelCollections.at(i);
 
-      LCCollection* inputCol = evt->getCollection(inputColName.c_str());
+      collectionType* inputCol = evt->getCollection(inputColName.c_str());
       _counters["NSim"] += inputCol->getNumberOfElements();
       CHT::Layout layout = layoutFromString(inputColName);
 
-      LCCollectionVec* outputCol = nullptr;
-      LCCollectionVec* outputRelCol = nullptr;
+      collectionVecType* outputCol = nullptr;
+      collectionVecType* outputRelCol = nullptr;
 
       processCollection(inputCol, outputCol, outputRelCol, layout);
 

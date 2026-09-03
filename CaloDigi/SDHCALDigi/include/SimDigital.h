@@ -11,12 +11,6 @@
 #include <utility>
 #include <vector>
 
-#include <EVENT/LCCollection.h>
-#include <EVENT/SimCalorimeterHit.h>
-#include <IMPL/CalorimeterHitImpl.h>
-#include <IMPL/LCCollectionVec.h>
-#include <IMPL/LCFlagImpl.h>
-
 #include <marlin/Global.h>
 
 #include <TF2.h>
@@ -81,7 +75,12 @@ struct AsicKey {
 template <typename InputTraits>
 class SimDigitalProcessor : public Processor {
 public:
-  using eventType = typename InputTraits::eventType;
+  using eventType =         typename InputTraits::eventType;
+  using collectionType =    typename InputTraits::collectionType;
+  using collectionVecType = typename InputTraits::collectionVecType;
+  using simcalohitType =    typename InputTraits::simcalohitType;
+  using calohitType =       typename InputTraits::calohitType;
+  using flagType =          typename InputTraits::flagType;
 
   virtual Processor* newProcessor() { return new SimDigitalProcessor<InputTraits>; }
   SimDigitalProcessor();
@@ -103,7 +102,7 @@ private:
   struct hitMemory {
     hitMemory() : ahit(nullptr), relatedHits(), maxEnergydueToHit(-1), rawHit(-1) {}
 
-    std::unique_ptr<CalorimeterHitImpl> ahit = nullptr;
+    std::unique_ptr<calohitType> ahit = nullptr;
 
     std::set<int> relatedHits{};
     float maxEnergydueToHit = -1;
@@ -115,9 +114,9 @@ private:
 
   typedef std::map<dd4hep::CellID, hitMemory> cellIDHitMap;
 
-  void processCollection(LCCollection* inputCol, LCCollectionVec*& outputCol, LCCollectionVec*& outputRelCol,
+  void processCollection(collectionType* inputCol, collectionVecType*& outputCol, collectionVecType*& outputRelCol,
                          CHT::Layout layout);
-  cellIDHitMap createPotentialOutputHits(LCCollection* col, SimDigitalGeomCellId* aGeomCellId);
+  cellIDHitMap createPotentialOutputHits(collectionType* col, SimDigitalGeomCellId* aGeomCellId);
 
   void removeAdjacentStep(std::vector<StepAndCharge>& vec);
   void fillTupleStep(const std::vector<StepAndCharge>& vec, int level);
@@ -129,8 +128,8 @@ private:
   std::vector<std::string> _outputCollections{};
   std::vector<std::string> _outputRelCollections{};
 
-  LCFlagImpl flag{};
-  LCFlagImpl flagRel{};
+  flagType flag{};
+  flagType flagRel{};
 
   std::map<std::string, int> _counters{};
   std::vector<float> _thresholdHcal{};
