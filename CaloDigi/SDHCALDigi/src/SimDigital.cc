@@ -1,4 +1,5 @@
 #include "SimDigital.h"
+#include "InputTraits.h"
 
 #include <EVENT/LCCollection.h>
 #include <EVENT/MCParticle.h>
@@ -34,9 +35,11 @@ using namespace lcio;
 using namespace marlin;
 using namespace std;
 
+using SimDigital = SimDigitalProcessor<ILCInputTraits>;
 SimDigital aSimDigital;
 
-SimDigital::SimDigital() : Processor("SimDigital"), chargeSpreaderParameters() {
+template <typename InputTraits>
+SimDigitalProcessor<InputTraits>::SimDigitalProcessor() : Processor("SimDigital"), chargeSpreaderParameters() {
   _description = "This processor creates SDHCAL digitized CalorimeterHits from SDHCAL SimCalorimeterHits";
 
   std::vector<std::string> hcalCollections = {"HcalBarrelCollection", "HcalEndCapRingsCollection",
@@ -143,7 +146,8 @@ SimDigital::SimDigital() : Processor("SimDigital"), chargeSpreaderParameters() {
                              _keepAtLeastOneStep, true);
 }
 
-void SimDigital::init() {
+template <typename InputTraits> 
+void SimDigitalProcessor<InputTraits>::init() {
   printParameters();
   // check that number of input and output collections names are the same
   assert(_outputCollections.size() == _inputCollections.size());
@@ -211,7 +215,8 @@ void SimDigital::init() {
   flagRel.setBit(LCIO::LCREL_WEIGHTED);
 }
 
-void SimDigital::removeAdjacentStep(std::vector<StepAndCharge>& vec) {
+template <typename InputTraits> 
+void SimDigitalProcessor<InputTraits>::removeAdjacentStep(std::vector<StepAndCharge>& vec) {
   if (vec.size() == 0)
     return;
   std::vector<StepAndCharge>::iterator first = vec.begin();
@@ -241,7 +246,8 @@ void SimDigital::removeAdjacentStep(std::vector<StepAndCharge>& vec) {
   vec.erase(firstToremove, vec.end());
 }
 
-void SimDigital::fillTupleStep(const std::vector<StepAndCharge>& vec, int level) {
+template <typename InputTraits> 
+void SimDigitalProcessor<InputTraits>::fillTupleStep(const std::vector<StepAndCharge>& vec, int level) {
   _tupleStepFilter->fill(level, int(vec.size()));
   for (std::vector<StepAndCharge>::const_iterator it = vec.begin(); it != vec.end(); it++) {
     _debugTupleStepFilter->fill(0, level);
@@ -264,7 +270,8 @@ void SimDigital::fillTupleStep(const std::vector<StepAndCharge>& vec, int level)
   }
 }
 
-SimDigital::cellIDHitMap SimDigital::createPotentialOutputHits(LCCollection* col, SimDigitalGeomCellId* aGeomCellId) {
+template <typename InputTraits>
+SimDigitalProcessor<InputTraits>::cellIDHitMap SimDigitalProcessor<InputTraits>::createPotentialOutputHits(LCCollection* col, SimDigitalGeomCellId* aGeomCellId) {
   cellIDHitMap myHitMap;
 
   int numElements = col->getNumberOfElements();
@@ -379,7 +386,8 @@ SimDigital::cellIDHitMap SimDigital::createPotentialOutputHits(LCCollection* col
   return myHitMap;
 }
 
-void SimDigital::removeHitsBelowThreshold(cellIDHitMap& myHitMap, float threshold) {
+template <typename InputTraits> 
+void SimDigitalProcessor<InputTraits>::removeHitsBelowThreshold(cellIDHitMap& myHitMap, float threshold) {
   for (auto it = myHitMap.cbegin(); it != myHitMap.cend();) {
     if ((it->second).ahit->getEnergy() < threshold)
       it = myHitMap.erase(it);
@@ -388,8 +396,9 @@ void SimDigital::removeHitsBelowThreshold(cellIDHitMap& myHitMap, float threshol
   }
 }
 
-void SimDigital::applyThresholds(cellIDHitMap& myHitMap) {
-  for (cellIDHitMap::iterator it = myHitMap.begin(); it != myHitMap.end(); it++) {
+template <typename InputTraits> 
+void SimDigitalProcessor<InputTraits>::applyThresholds(cellIDHitMap& myHitMap) {
+  for (typename cellIDHitMap::iterator it = myHitMap.begin(); it != myHitMap.end(); it++) {
     hitMemory& currentHitMem = it->second;
     float hitCharge = currentHitMem.ahit->getEnergy();
 
@@ -410,7 +419,8 @@ void SimDigital::applyThresholds(cellIDHitMap& myHitMap) {
   }
 }
 
-void SimDigital::processCollection(LCCollection* inputCol, LCCollectionVec*& outputCol, LCCollectionVec*& outputRelCol,
+template <typename InputTraits> 
+void SimDigitalProcessor<InputTraits>::processCollection(LCCollection* inputCol, LCCollectionVec*& outputCol, LCCollectionVec*& outputRelCol,
                                    CHT::Layout layout) {
   outputCol = new LCCollectionVec(LCIO::CALORIMETERHIT);
   outputRelCol = new LCCollectionVec(LCIO::LCRELATION);
@@ -439,7 +449,7 @@ void SimDigital::processCollection(LCCollection* inputCol, LCCollectionVec*& out
     applyThresholds(myHitMap);
 
   // Store element to output collection
-  for (cellIDHitMap::iterator it = myHitMap.begin(); it != myHitMap.end(); it++) {
+  for (typename cellIDHitMap::iterator it = myHitMap.begin(); it != myHitMap.end(); it++) {
     hitMemory& currentHitMem = it->second;
     if (currentHitMem.rawHit != -1) {
       streamlog_out(DEBUG) << " rawHit= " << currentHitMem.rawHit << std::endl;
@@ -460,7 +470,8 @@ void SimDigital::processCollection(LCCollection* inputCol, LCCollectionVec*& out
   delete geomCellId;
 }
 
-void SimDigital::processEvent(LCEvent* evt) {
+template <typename InputTraits> 
+void SimDigitalProcessor<InputTraits>::processEvent(eventType* evt) {
   if (isFirstEvent())
     SimDigitalGeomCellId::bookTuples(this);
 

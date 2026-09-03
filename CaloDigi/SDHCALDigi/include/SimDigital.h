@@ -78,10 +78,13 @@ struct AsicKey {
   }
 };
 
-class SimDigital : public Processor {
+template <typename InputTraits>
+class SimDigitalProcessor : public Processor {
 public:
-  virtual Processor* newProcessor() { return new SimDigital; }
-  SimDigital();
+  using eventType = typename InputTraits::eventType;
+
+  virtual Processor* newProcessor() { return new SimDigitalProcessor<InputTraits>; }
+  SimDigitalProcessor();
 
   /** Called at the begin of the job before anything is read.
    * Use to initialize the processor, e.g. book histograms.
@@ -90,10 +93,10 @@ public:
 
   /** Called for every event - the working horse.
    */
-  virtual void processEvent(LCEvent* evt);
+  virtual void processEvent(eventType* evt);
 
-  SimDigital(const SimDigital& toCopy) = delete;
-  void operator=(const SimDigital& toCopy) = delete;
+  SimDigitalProcessor(const SimDigitalProcessor& toCopy) = delete;
+  void operator=(const SimDigitalProcessor& toCopy) = delete;
 
 private:
   // intermediate storage class
