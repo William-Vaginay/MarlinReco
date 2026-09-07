@@ -1,12 +1,11 @@
 #include "SimDigital.h"
 #include "InputTraits.h"
 
-#include <EVENT/MCParticle.h>
-#include <IMPL/LCRelationImpl.h>
+//#include <EVENT/MCParticle.h> // useless here
 #include <marlin/Exceptions.h>
 #include <marlin/Global.h>
 
-#include <EVENT/LCParameters.h>
+
 #include <UTIL/CellIDDecoder.h>
 #include <UTIL/CellIDEncoder.h>
 
@@ -269,10 +268,10 @@ template <typename InputTraits>
 SimDigitalProcessor<InputTraits>::cellIDHitMap SimDigitalProcessor<InputTraits>::createPotentialOutputHits(collectionType* col, SimDigitalGeomCellId* aGeomCellId) {
   cellIDHitMap myHitMap;
 
-  int numElements = col->getNumberOfElements();
+  int numElements = InputTraits::getNumberOfElements(col);
 
   for (int j = 0; j < numElements; ++j) {
-    simcalohitType* hit = dynamic_cast<simcalohitType*>(col->getElementAt(j));
+    simcalohitType* hit = dynamic_cast<simcalohitType*>(InputTraits::getElementAt(col, j));
 
     std::vector<StepAndCharge> steps;
 
@@ -347,16 +346,16 @@ SimDigitalProcessor<InputTraits>::cellIDHitMap SimDigitalProcessor<InputTraits>:
         if (tmp == nullptr)
           continue;
 
-        dd4hep::CellID index = tmp->getCellID1();
+        dd4hep::CellID index = InputTraits::getCellID1(tmp.get());
         index = index << 32;
-        index += tmp->getCellID0();
+        index += InputTraits::getCellID0(tmp.get());
 
         if (myHitMap.find(index) == myHitMap.end()) // create hit
         {
           hitMemory& toto = myHitMap[index];
           toto.ahit = std::move(tmp);
-          toto.ahit->setEnergy(0);
-          toto.ahit->setTime(time);
+          InputTraits::setEnergy(toto.ahit.get(), 0);
+          InputTraits::setTime(toto.ahit.get(), time);
         }
 
         hitMemory& calhitMem = myHitMap.at(index);
@@ -366,7 +365,7 @@ SimDigitalProcessor<InputTraits>::cellIDHitMap SimDigitalProcessor<InputTraits>:
           calhitMem.maxEnergydueToHit = it.second;
         }
 
-        calhitMem.ahit->setEnergy(calhitMem.ahit->getEnergy() + it.second);
+        InputTraits::setEnergy(calhitMem.ahit.get(), InputTraits::getEnergy(calhitMem.ahit.get()) + it.second);
         calhitMem.relatedHits.insert(j);
       } else {
         streamlog_out(ERROR) << "BUG in charge splitter, got a non positive charge : " << it.second << std::endl;
@@ -376,7 +375,7 @@ SimDigitalProcessor<InputTraits>::cellIDHitMap SimDigitalProcessor<InputTraits>:
   } // end of for (int j(0); j < numElements; ++j)  //loop on elements in collection
 
   for (const auto& it : myHitMap)
-    _hitCharge.push_back(it.second.ahit->getEnergy());
+    _hitCharge.push_back(InputTraits::getEnergy(it.second.ahit.get()));
 
   return myHitMap;
 }
@@ -384,7 +383,7 @@ SimDigitalProcessor<InputTraits>::cellIDHitMap SimDigitalProcessor<InputTraits>:
 template <typename InputTraits> 
 void SimDigitalProcessor<InputTraits>::removeHitsBelowThreshold(cellIDHitMap& myHitMap, float threshold) {
   for (auto it = myHitMap.cbegin(); it != myHitMap.cend();) {
-    if ((it->second).ahit->getEnergy() < threshold)
+    if (InputTraits::getEnergy(it->second.ahit.get()) < threshold)
       it = myHitMap.erase(it);
     else
       ++it;
@@ -395,7 +394,7 @@ template <typename InputTraits>
 void SimDigitalProcessor<InputTraits>::applyThresholds(cellIDHitMap& myHitMap) {
   for (typename cellIDHitMap::iterator it = myHitMap.begin(); it != myHitMap.end(); it++) {
     hitMemory& currentHitMem = it->second;
-    float hitCharge = currentHitMem.ahit->getEnergy();
+    float hitCharge = InputTraits::getEnergy(currentHitMem.ahit.get());
 
     unsigned int iThr = 0;
     for (unsigned int i = 0; i < _thresholdHcal.size(); ++i) {
@@ -410,7 +409,7 @@ void SimDigitalProcessor<InputTraits>::applyThresholds(cellIDHitMap& myHitMap) {
     if (iThr == 2)
       _counters["N3"]++;
 
-    currentHitMem.ahit->setEnergy(static_cast<float>(iThr + 1));
+    InputTraits::setEnergy(currentHitMem.ahit.get(), static_cast<float>(iThr + 1));
   }
 }
 
@@ -420,11 +419,11 @@ void SimDigitalProcessor<InputTraits>::processCollection(collectionType* inputCo
   outputCol = new collectionVecType(LCIO::CALORIMETERHIT);
   outputRelCol = new collectionVecType(LCIO::LCRELATION);
 
-  outputCol->setFlag(flag.getFlag());
+  InputTraits::setFlag(outputCol, InputTraits::getFlag(flag));
 
-  outputRelCol->setFlag(flagRel.getFlag());
-  outputRelCol->parameters().setValue("FromType", LCIO::CALORIMETERHIT);
-  outputRelCol->parameters().setValue("ToType", LCIO::SIMCALORIMETERHIT);
+  InputTraits::setFlag(outputRelCol, InputTraits::getFlag(flagRel));
+  InputTraits::setValue(InputTraits::parameters(outputRelCol), "ToType", LCIO::SIMCALORIMETERHIT);
+  InputTraits::setValue(InputTraits::parameters(outputRelCol), "FromType", LCIO::CALORIMETERHIT);
 
   SimDigitalGeomCellId* geomCellId = nullptr;
 
@@ -448,17 +447,18 @@ void SimDigitalProcessor<InputTraits>::processCollection(collectionType* inputCo
     hitMemory& currentHitMem = it->second;
     if (currentHitMem.rawHit != -1) {
       streamlog_out(DEBUG) << " rawHit= " << currentHitMem.rawHit << std::endl;
-      simcalohitType* hitraw = dynamic_cast<simcalohitType*>(inputCol->getElementAt(currentHitMem.rawHit));
-      currentHitMem.ahit->setRawHit(hitraw);
+      //simcalohitType* hitraw = dynamic_cast<simcalohitType*>(inputCol->getElementAt(currentHitMem.rawHit));
+      simcalohitType* hitraw = dynamic_cast<simcalohitType*>(InputTraits::getElementAt(inputCol, currentHitMem.rawHit));
+      InputTraits::setRawHit(currentHitMem.ahit.get(), hitraw);
     }
 
     auto caloHit = currentHitMem.ahit.release();
-    outputCol->addElement(caloHit);
+    InputTraits::addElement(outputCol, caloHit);
 
     // put only one relation with the SimCalorimeterHit which contributes most
-    simcalohitType* hit = dynamic_cast<simcalohitType*>(inputCol->getElementAt(currentHitMem.rawHit));
+    simcalohitType* hit = dynamic_cast<simcalohitType*>(InputTraits::getElementAt(inputCol, currentHitMem.rawHit));
     LCRelationImpl* rel = new LCRelationImpl(caloHit, hit, 1.0);
-    outputRelCol->addElement(rel);
+    InputTraits::addElement(outputRelCol, rel);
 
   } // end of loop on myHitMap
 
@@ -477,7 +477,7 @@ void SimDigitalProcessor<InputTraits>::processEvent(eventType* evt) {
   _counters["N2"] = 0;
   _counters["N3"] = 0;
 
-  geneMap.clear();
+  //geneMap.clear();
   _hitCharge.clear();
 
   for (unsigned int i(0); i < _inputCollections.size(); ++i) {
@@ -486,8 +486,11 @@ void SimDigitalProcessor<InputTraits>::processEvent(eventType* evt) {
       std::string outputColName = _outputCollections.at(i);
       std::string outputRelColName = _outputRelCollections.at(i);
 
-      collectionType* inputCol = evt->getCollection(inputColName.c_str());
-      _counters["NSim"] += inputCol->getNumberOfElements();
+      //collectionType* inputCol = evt->getCollection(inputColName.c_str());
+      collectionType* inputCol = InputTraits::getCollection(evt, inputColName);
+
+     // _counters["NSim"] += inputCol->getNumberOfElements();
+      _counters["NSim"] += InputTraits::getNumberOfElements(inputCol);
       CHT::Layout layout = layoutFromString(inputColName);
 
       collectionVecType* outputCol = nullptr;
@@ -495,10 +498,13 @@ void SimDigitalProcessor<InputTraits>::processEvent(eventType* evt) {
 
       processCollection(inputCol, outputCol, outputRelCol, layout);
 
-      _counters["NReco"] += outputCol->getNumberOfElements();
+      //_counters["NReco"] += outputCol->getNumberOfElements();
+      _counters["NReco"] += InputTraits::getNumberOfElements(outputCol);
 
-      evt->addCollection(outputCol, outputColName.c_str());
-      evt->addCollection(outputRelCol, outputRelColName.c_str());
+      //evt->addCollection(outputCol, outputColName.c_str());
+      //evt->addCollection(outputRelCol, outputRelColName.c_str());
+      InputTraits::addCollection(evt, outputCol, outputColName);
+      InputTraits::addCollection(evt, outputRelCol, outputRelColName);
     } catch (DataNotAvailableException&) {
     }
   }

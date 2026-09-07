@@ -18,7 +18,7 @@
 #include <TH1.h>
 
 #include "CalorimeterHitType.h" //in MarlinUtil
-#include "marlinutil/LCGeometryTypes.h"
+#include "CLHEP/Vector/ThreeVector.h"
 
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogramFactory.h>
@@ -51,8 +51,8 @@ using namespace marlin;
 
 struct StepAndCharge {
   StepAndCharge() : step{} {}
-  StepAndCharge(LCVector3D vec, float _length, float _time) : step{vec}, stepLength{_length}, time{_time} {}
-  LCVector3D step;
+  StepAndCharge(CLHEP::Hep3Vector vec, float _length, float _time) : step{vec}, stepLength{_length}, time{_time} {}
+  CLHEP::Hep3Vector step;
   float charge = 0;
   float stepLength = 0;
   float time = 0;
@@ -136,7 +136,7 @@ private:
 
   std::vector<double> _hitCharge = {};
 
-  std::map<dd4hep::CellID, std::vector<LCGenericObject*>> geneMap = {};
+  //std::map<dd4hep::CellID, std::vector<LCGenericObject*>> geneMap = {};  // useless
 
   float _cellSize = 0;
   float _gasGapWidth = 1.2f;
