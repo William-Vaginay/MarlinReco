@@ -26,7 +26,7 @@ namespace SimDigital_Data {
   void addCollection(ILCInputTraits::eventType* evt, ILCInputTraits::collectionVecType* col, const std::string& name) { evt->addCollection(col, name.c_str()); }
 
   int getNumberOfElements(const ILCInputTraits::collectionType* col) { return col->getNumberOfElements(); }
-  ILCInputTraits::objectType* getElementAt(const ILCInputTraits::collectionType* col, int index) { return col->getElementAt(index); }
+  ILCInputTraits::simcalohitType* getElementAt(const ILCInputTraits::collectionType* col, int index) { return dynamic_cast<ILCInputTraits::simcalohitType*>(col->getElementAt(index)); }
 
   void setFlag(ILCInputTraits::collectionVecType* col, const int& flag) { col->setFlag(flag); }
   ILCInputTraits::parametersType& parameters(ILCInputTraits::collectionVecType* col) { return col->parameters(); }

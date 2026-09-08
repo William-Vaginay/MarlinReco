@@ -271,7 +271,7 @@ SimDigitalProcessor<InputTraits>::cellIDHitMap SimDigitalProcessor<InputTraits>:
   int numElements = SimDigital_Data::getNumberOfElements(col);
 
   for (int j = 0; j < numElements; ++j) {
-    simcalohitType* hit = dynamic_cast<simcalohitType*>(SimDigital_Data::getElementAt(col, j));
+    simcalohitType* hit = (SimDigital_Data::getElementAt(col, j));
 
     std::vector<StepAndCharge> steps;
 
@@ -447,7 +447,7 @@ void SimDigitalProcessor<InputTraits>::processCollection(collectionType* inputCo
     hitMemory& currentHitMem = it->second;
     if (currentHitMem.rawHit != -1) {
       streamlog_out(DEBUG) << " rawHit= " << currentHitMem.rawHit << std::endl;
-      simcalohitType* hitraw = dynamic_cast<simcalohitType*>(SimDigital_Data::getElementAt(inputCol, currentHitMem.rawHit));
+      simcalohitType* hitraw = SimDigital_Data::getElementAt(inputCol, currentHitMem.rawHit);
       SimDigital_Data::setRawHit(currentHitMem.ahit.get(), hitraw);
     }
 
@@ -455,7 +455,7 @@ void SimDigitalProcessor<InputTraits>::processCollection(collectionType* inputCo
     SimDigital_Data::addElement(outputCol, caloHit);
 
     // put only one relation with the SimCalorimeterHit which contributes most
-    simcalohitType* hit = dynamic_cast<simcalohitType*>(SimDigital_Data::getElementAt(inputCol, currentHitMem.rawHit));
+    simcalohitType* hit = SimDigital_Data::getElementAt(inputCol, currentHitMem.rawHit);
     LCRelationImpl* rel = new LCRelationImpl(caloHit, hit, 1.0);
     SimDigital_Data::addElement(outputRelCol, rel);
 
