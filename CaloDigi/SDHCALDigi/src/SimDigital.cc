@@ -468,7 +468,7 @@ template <typename InputTraits>
 void SimDigitalProcessor<InputTraits>::processEvent(eventType* evt) {
   if (isFirstEvent()) {
     DebugGeomHit::bookTuples(this);
-    SimDigitalGeomCellId::bookTuples(this);
+    DebugGeomStep::bookTuples(this);
   }
 
   _counters["|ALL"]++;

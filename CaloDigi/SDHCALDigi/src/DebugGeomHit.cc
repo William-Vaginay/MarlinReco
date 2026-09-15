@@ -28,9 +28,9 @@ void DebugGeomHit::fill(SimDigitalGeomCellId_Base* geomCellId) {
     }
 
     for (int i = 0; i < 3; i++) {
-        _tupleHit->fill(TH_NORMALX + i, float(geomCellId->normalToRPCPlane()[i]));
-        _tupleHit->fill(TH_IX + i, float(geomCellId->Iaxis()[i]));
-        _tupleHit->fill(TH_JX + i, float(geomCellId->Jaxis()[i]));
+      _tupleHit->fill(TH_NORMALX + i, float(geomCellId->normalToRPCPlane()[i]));
+      _tupleHit->fill(TH_IX + i, float(geomCellId->Iaxis()[i]));
+      _tupleHit->fill(TH_JX + i, float(geomCellId->Jaxis()[i]));
     }
     _tupleHit->addRow();
   }

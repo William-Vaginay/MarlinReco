@@ -28,6 +28,7 @@
 #include "EfficiencyManager.h"
 #include "SimDigitalGeom.h"
 #include "DebugGeomHit.h"
+#include "DebugGeomStep.h"
 
 class TH1F;
 class TF1;

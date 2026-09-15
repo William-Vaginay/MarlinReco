@@ -16,24 +16,9 @@
 using namespace lcio;
 using namespace marlin;
 
-AIDA::ITuple* SimDigitalGeomCellId::_tupleStep = nullptr;
+SimDigitalGeomCellId_Base::SimDigitalGeomCellId_Base() : _normal(), _Iaxis(), _Jaxis() {}
 
-void SimDigitalGeomCellId::bookTuples(const marlin::Processor* proc) {
-  _tupleStep = AIDAProcessor::tupleFactory(proc)->create(
-      "SimDigitalStep", "SimDigital_DebugStep",
-      "int chtlayout,hitcellid,nstep, float hitx,hity,hitz,stepx,stepy,stepz,deltaI,deltaJ,deltaLayer,time");
-  streamlog_out(DEBUG) << "Tuple for Step has been initialized to " << _tupleStep << std::endl;
-  streamlog_out(DEBUG) << "it has " << _tupleStep->columns() << " columns" << std::endl;
-}
-
-SimDigitalGeomCellId_Base::SimDigitalGeomCellId_Base() : _normal(), _Iaxis(), _Jaxis() /*, _debugGeomHit(new DebugGeomHit())*/ {}
-
-SimDigitalGeomCellId_Base::~SimDigitalGeomCellId_Base() {
-  /*if (_debugGeomHit != nullptr) {
-    delete _debugGeomHit;
-    _debugGeomHit = nullptr;
-  }*/
-}
+SimDigitalGeomCellId_Base::~SimDigitalGeomCellId_Base() {}
 
 SimDigitalGeomCellId::SimDigitalGeomCellId(LCCollection* inputCol, LCCollectionVec* outputCol)
     : SimDigitalGeomCellId_Base(), _decoder(inputCol), _encoder(inputCol->getParameters().getStringVal(LCIO::CellIDEncoding), outputCol) {
@@ -279,48 +264,10 @@ std::vector<StepAndCharge> SimDigitalGeomCellId::decode(SimCalorimeterHit* hit, 
 
   this->createStepAndChargeVec(hit, stepsInIJZcoord, link);
 
-  //fillDebugTupleGeometryHit();
-  //_debugGeomHit->fill(this);
   DebugGeomHit::fill(this);
-  fillDebugTupleGeometryStep(hit, stepsInIJZcoord);
+  DebugGeomStep::fill(this, hit, stepsInIJZcoord);
 
   return stepsInIJZcoord;
-}
-
-void SimDigitalGeomCellId::fillDebugTupleGeometryStep(SimCalorimeterHit* hit,
-                                                      const std::vector<StepAndCharge>& stepsInIJZcoord) {
-  if (_tupleStep != nullptr) {
-    int nsteps = hit->getNMCContributions();
-    float notset = -88888;
-    for (int imcp = 0; imcp < nsteps; imcp++) {
-      _tupleStep->fill(TS_CHTLAYOUT, int(_currentHCALCollectionCaloLayout));
-      _tupleStep->fill(TS_HITCELLID, hit->getCellID0());
-      _tupleStep->fill(TS_NSTEP, nsteps);
-      const float* steppos = hit->getStepPosition(imcp);
-      for (int i = 0; i < 3; i++) {
-        if (_hitPosition != NULL)
-          _tupleStep->fill(TS_HITX + i, _hitPosition[i]);
-        else
-          _tupleStep->fill(TS_HITX + i, notset);
-
-        if (steppos != NULL)
-          _tupleStep->fill(TS_STEPX + i, steppos[i]);
-        else
-          _tupleStep->fill(TS_STEPX + i, notset);
-
-        if (imcp < (int)stepsInIJZcoord.size())
-          _tupleStep->fill(TS_DELTAI + i, stepsInIJZcoord[imcp].step[i]);
-        else
-          _tupleStep->fill(TS_DELTAI + i, notset);
-      }
-      if (imcp < (int)stepsInIJZcoord.size())
-        _tupleStep->fill(TS_TIME, hit->getTimeCont(imcp));
-      else
-        _tupleStep->fill(TS_TIME, notset);
-
-      _tupleStep->addRow();
-    }
-  }
 }
 
 std::unique_ptr<CalorimeterHitImpl> SimDigitalGeomCellIdLCGEO::encode(int delta_I, int delta_J) {

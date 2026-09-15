@@ -28,7 +28,6 @@ namespace AIDA {
 class ITuple;
 }
 
-class DebugGeomHit;
 struct StepAndCharge;
 
 struct PotentialSameTrackID {
@@ -89,8 +88,6 @@ protected:
   const float* _hitPosition = nullptr;
 
   CHT::Layout _currentHCALCollectionCaloLayout = CHT::any;
-
-  //DebugGeomHit* _debugGeomHit = nullptr;
 };
 
 class SimDigitalGeomCellId : public SimDigitalGeomCellId_Base {
@@ -121,30 +118,6 @@ protected:
 
   std::string _cellIDEncodingString = "";
 
-  // geometry debug tuples
-public:
-  static void bookTuples(const marlin::Processor* proc);
-
-protected:
-  //void fillDebugTupleGeometryHit();
-  void fillDebugTupleGeometryStep(SimCalorimeterHit* hit, const std::vector<StepAndCharge>& stepsInIJZcoord);
-
-  static AIDA::ITuple* _tupleStep;
-  enum {
-    TS_CHTLAYOUT,
-    TS_HITCELLID,
-    TS_NSTEP,
-    TS_HITX,
-    TS_HITY,
-    TS_HITZ,
-    TS_STEPX,
-    TS_STEPY,
-    TS_STEPZ,
-    TS_DELTAI,
-    TS_DELTAJ,
-    TS_DELTALAYER,
-    TS_TIME
-  };
 };
 
 class SimDigitalGeomCellIdLCGEO : public SimDigitalGeomCellId {
