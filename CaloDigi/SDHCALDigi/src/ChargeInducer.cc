@@ -18,7 +18,7 @@ UniformPolya::UniformPolya(float _qbar, float _theta)
 
 UniformPolya::~UniformPolya() {}
 
-float UniformPolya::getCharge(SimDigitalGeomCellId*) { return gammadist(generator); }
+float UniformPolya::getCharge(SimDigitalGeomCellId_Base*) { return gammadist(generator); }
 
 AsicPolya::AsicPolya(float _qbar, float _theta, std::string fileName) : UniformPolya(_qbar, _theta), polyaMap() {
   readFile(fileName);
@@ -73,7 +73,7 @@ void AsicPolya::readFile(std::string fileName) {
   file->Close();
 }
 
-float AsicPolya::getCharge(SimDigitalGeomCellId* cellID) {
+float AsicPolya::getCharge(SimDigitalGeomCellId_Base* cellID) {
   //	int asicKey = (cellID.I()-1)/8 + ((cellID.J()-1)/8)*12 + cellID.K()*1000 ;
   AsicKey asicKey(cellID->K(), (cellID->I() - 1) / 8, (cellID->J() - 1) / 8);
 

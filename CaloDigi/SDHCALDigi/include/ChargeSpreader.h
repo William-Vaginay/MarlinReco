@@ -6,7 +6,7 @@
 #include <map>
 
 struct AsicKey;
-class SimDigitalGeomCellId;
+class SimDigitalGeomCellId_Base;
 
 struct ChargeSpreaderParameters {
   float cellSize = 10.f;
@@ -31,7 +31,7 @@ public:
   virtual void init() = 0;
 
   typedef std::pair<int, int> I_J_Coordinates;
-  virtual void addCharge(float charge, float posI, float posJ, SimDigitalGeomCellId*);
+  virtual void addCharge(float charge, float posI, float posJ, SimDigitalGeomCellId_Base*);
   void newHit(float cellSize_) {
     chargeMap.clear();
     parameters.cellSize = cellSize_;
@@ -78,7 +78,7 @@ public:
     dGlobal = parameters.d;
   }
 
-  virtual void addCharge(float charge, float posI, float posJ, SimDigitalGeomCellId* cellID);
+  virtual void addCharge(float charge, float posI, float posJ, SimDigitalGeomCellId_Base* cellID);
 
 protected:
   float dGlobal = 1.0f;

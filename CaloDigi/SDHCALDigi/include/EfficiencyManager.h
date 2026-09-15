@@ -5,14 +5,14 @@
 #include <string>
 
 struct AsicKey;
-class SimDigitalGeomCellId;
+class SimDigitalGeomCellId_Base;
 
 class EfficiencyManager {
 public:
   EfficiencyManager();
   virtual ~EfficiencyManager();
 
-  virtual float getEfficiency(SimDigitalGeomCellId* cellID) = 0;
+  virtual float getEfficiency(SimDigitalGeomCellId_Base* cellID) = 0;
 };
 
 class UniformEfficiency : public EfficiencyManager {
@@ -20,7 +20,7 @@ public:
   UniformEfficiency(float val = 1.0);
   virtual ~UniformEfficiency();
 
-  virtual float getEfficiency(SimDigitalGeomCellId* cellID);
+  virtual float getEfficiency(SimDigitalGeomCellId_Base* cellID);
 
 protected:
   float value;
@@ -31,7 +31,7 @@ public:
   AsicEfficiency(std::string fileName, float globalVal = 1.0);
   virtual ~AsicEfficiency();
 
-  virtual float getEfficiency(SimDigitalGeomCellId* cellID);
+  virtual float getEfficiency(SimDigitalGeomCellId_Base* cellID);
 
 protected:
   void readFile(std::string fileName);

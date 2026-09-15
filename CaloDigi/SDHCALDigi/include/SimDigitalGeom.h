@@ -28,6 +28,7 @@ namespace AIDA {
 class ITuple;
 }
 
+class DebugGeomHit;
 struct StepAndCharge;
 
 struct PotentialSameTrackID {
@@ -44,26 +45,13 @@ struct PotentialSameTrackID {
   }
 };
 
-class SimDigitalGeomCellId {
+class SimDigitalGeomCellId_Base {
 public:
-  SimDigitalGeomCellId(LCCollection* inputCol, LCCollectionVec* outputCol);
-  virtual ~SimDigitalGeomCellId();
+  SimDigitalGeomCellId_Base();
+  virtual ~SimDigitalGeomCellId_Base();
 
   void setCellSize(float size) { _cellSize = size; }
-
   virtual float getCellSize() = 0;
-  virtual void setLayerLayout(CHT::Layout layout) = 0;
-
-  std::vector<StepAndCharge> decode(SimCalorimeterHit* hit, bool link);
-
-protected:
-  virtual void processGeometry(SimCalorimeterHit* hit) = 0;
-  void createStepAndChargeVec(SimCalorimeterHit* hit, std::vector<StepAndCharge>& vec, bool link);
-
-  void linkSteps(std::vector<StepAndCharge>& vec);
-
-public:
-  virtual std::unique_ptr<CalorimeterHitImpl> encode(int delta_I, int delta_J) = 0;
 
   int I() const { return _Iy; }
   int J() const { return _Jz; }
@@ -76,15 +64,14 @@ public:
   const LCVector3D& Iaxis() const { return _Iaxis; }
   const LCVector3D& Jaxis() const { return _Jaxis; }
 
-  SimDigitalGeomCellId(const SimDigitalGeomCellId& toCopy) = delete;
-  void operator=(const SimDigitalGeomCellId& toCopy) = delete;
+  const float* hitPosition() const { return _hitPosition; }
+
+  CHT::Layout getCaloLayout() const { return _currentHCALCollectionCaloLayout; }
+
+  SimDigitalGeomCellId_Base(const SimDigitalGeomCellId_Base& toCopy) = delete;
+  void operator=(const SimDigitalGeomCellId_Base& toCopy) = delete;
 
 protected:
-  CHT::Layout _currentHCALCollectionCaloLayout = CHT::any;
-
-  dd4hep::CellID _cellIDvalue = 0;
-  CellIDDecoder<SimCalorimeterHit> _decoder;
-  CellIDEncoder<CalorimeterHitImpl> _encoder;
 
   float _cellSize = 0.0f;
 
@@ -101,6 +88,37 @@ protected:
 
   const float* _hitPosition = nullptr;
 
+  CHT::Layout _currentHCALCollectionCaloLayout = CHT::any;
+
+  //DebugGeomHit* _debugGeomHit = nullptr;
+};
+
+class SimDigitalGeomCellId : public SimDigitalGeomCellId_Base {
+public:
+  SimDigitalGeomCellId(LCCollection* inputCol, LCCollectionVec* outputCol);
+  virtual ~SimDigitalGeomCellId();
+
+  virtual void setLayerLayout(CHT::Layout layout) = 0;
+
+  std::vector<StepAndCharge> decode(SimCalorimeterHit* hit, bool link);
+
+protected:
+  virtual void processGeometry(SimCalorimeterHit* hit) = 0;
+  void createStepAndChargeVec(SimCalorimeterHit* hit, std::vector<StepAndCharge>& vec, bool link);
+
+  void linkSteps(std::vector<StepAndCharge>& vec);
+
+public:
+  virtual std::unique_ptr<CalorimeterHitImpl> encode(int delta_I, int delta_J) = 0;
+
+  SimDigitalGeomCellId(const SimDigitalGeomCellId& toCopy) = delete;
+  void operator=(const SimDigitalGeomCellId& toCopy) = delete;
+
+protected:
+  dd4hep::CellID _cellIDvalue = 0;
+  CellIDDecoder<SimCalorimeterHit> _decoder;
+  CellIDEncoder<CalorimeterHitImpl> _encoder;
+
   std::string _cellIDEncodingString = "";
 
   // geometry debug tuples
@@ -108,31 +126,9 @@ public:
   static void bookTuples(const marlin::Processor* proc);
 
 protected:
-  void fillDebugTupleGeometryHit();
+  //void fillDebugTupleGeometryHit();
   void fillDebugTupleGeometryStep(SimCalorimeterHit* hit, const std::vector<StepAndCharge>& stepsInIJZcoord);
 
-  static AIDA::ITuple* _tupleHit;
-  enum {
-    TH_CHTLAYOUT,
-    TH_MODULE,
-    TH_TOWER,
-    TH_STAVE,
-    TH_LAYER,
-    TH_I,
-    TH_J,
-    TH_X,
-    TH_Y,
-    TH_Z,
-    TH_NORMALX,
-    TH_NORMALY,
-    TH_NORMALZ,
-    TH_IX,
-    TH_IY,
-    TH_IZ,
-    TH_JX,
-    TH_JY,
-    TH_JZ
-  };
   static AIDA::ITuple* _tupleStep;
   enum {
     TS_CHTLAYOUT,

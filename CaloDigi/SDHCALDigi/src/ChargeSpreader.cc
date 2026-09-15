@@ -15,7 +15,7 @@ ChargeSpreader::ChargeSpreader() : chargeMap(), parameters() {}
 
 ChargeSpreader::~ChargeSpreader() {}
 
-void ChargeSpreader::addCharge(float charge, float posI, float posJ, SimDigitalGeomCellId*) {
+void ChargeSpreader::addCharge(float charge, float posI, float posJ, SimDigitalGeomCellId_Base*) {
   if (parameters.padSeparation > parameters.cellSize)
     return;
 
@@ -146,7 +146,7 @@ void ExactSpreaderPerAsic::readFile(std::string fileName) {
   file->Close();
 }
 
-void ExactSpreaderPerAsic::addCharge(float charge, float posI, float posJ, SimDigitalGeomCellId* cellID) {
+void ExactSpreaderPerAsic::addCharge(float charge, float posI, float posJ, SimDigitalGeomCellId_Base* cellID) {
   AsicKey asicKey(cellID->K(), (cellID->I() - 1) / 8, (cellID->J() - 1) / 8);
 
   std::map<AsicKey, float>::iterator it = dMap.find(asicKey);

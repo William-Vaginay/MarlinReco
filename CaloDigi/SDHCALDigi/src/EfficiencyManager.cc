@@ -12,7 +12,7 @@ EfficiencyManager::~EfficiencyManager() {}
 UniformEfficiency::UniformEfficiency(float val) : EfficiencyManager(), value(val) {}
 UniformEfficiency::~UniformEfficiency() {}
 
-float UniformEfficiency::getEfficiency(SimDigitalGeomCellId*) { return value; }
+float UniformEfficiency::getEfficiency(SimDigitalGeomCellId_Base*) { return value; }
 
 AsicEfficiency::AsicEfficiency(std::string fileName, float globalVal) : UniformEfficiency(globalVal), effMap() {
   readFile(fileName);
@@ -63,7 +63,7 @@ void AsicEfficiency::readFile(std::string fileName) {
   file->Close();
 }
 
-float AsicEfficiency::getEfficiency(SimDigitalGeomCellId* cellID) {
+float AsicEfficiency::getEfficiency(SimDigitalGeomCellId_Base* cellID) {
   AsicKey asicKey(cellID->K(), (cellID->I() - 1) / 8, (cellID->J() - 1) / 8);
 
   std::map<AsicKey, float>::const_iterator it = effMap.find(asicKey);

@@ -6,14 +6,14 @@
 
 #include <random>
 
-class SimDigitalGeomCellId;
+class SimDigitalGeomCellId_Base;
 struct AsicKey;
 
 class ChargeInducer {
 public:
   ChargeInducer();
   virtual ~ChargeInducer();
-  virtual float getCharge(SimDigitalGeomCellId* cellID) = 0;
+  virtual float getCharge(SimDigitalGeomCellId_Base* cellID) = 0;
 
   void setSeed(unsigned int value);
 
@@ -26,7 +26,7 @@ public:
   UniformPolya(float _qbar, float _theta);
   ~UniformPolya();
 
-  virtual float getCharge(SimDigitalGeomCellId* cellID);
+  virtual float getCharge(SimDigitalGeomCellId_Base* cellID);
 
 protected:
   std::gamma_distribution<float> gammadist;
@@ -37,7 +37,7 @@ public:
   AsicPolya(float _qbar, float _theta, std::string fileName);
   ~AsicPolya();
 
-  virtual float getCharge(SimDigitalGeomCellId* cellID);
+  virtual float getCharge(SimDigitalGeomCellId_Base* cellID);
 
 protected:
   void readFile(std::string fileName);

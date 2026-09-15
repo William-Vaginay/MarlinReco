@@ -16,16 +16,9 @@
 using namespace lcio;
 using namespace marlin;
 
-AIDA::ITuple* SimDigitalGeomCellId::_tupleHit = NULL;
-AIDA::ITuple* SimDigitalGeomCellId::_tupleStep = NULL;
+AIDA::ITuple* SimDigitalGeomCellId::_tupleStep = nullptr;
 
 void SimDigitalGeomCellId::bookTuples(const marlin::Processor* proc) {
-  _tupleHit = AIDAProcessor::tupleFactory(proc)->create(
-      "SimDigitalGeom", "SimDigital_Debug",
-      "int chtlayout,module,tower,stave,layer,I,J, float x,y,z, normalx,normaly,normalz, Ix,Iy,Iz,Jx,Jy,Jz");
-  streamlog_out(DEBUG) << "Tuple for Hit has been initialized to " << _tupleHit << std::endl;
-  streamlog_out(DEBUG) << "it has " << _tupleHit->columns() << " columns" << std::endl;
-
   _tupleStep = AIDAProcessor::tupleFactory(proc)->create(
       "SimDigitalStep", "SimDigital_DebugStep",
       "int chtlayout,hitcellid,nstep, float hitx,hity,hitz,stepx,stepy,stepz,deltaI,deltaJ,deltaLayer,time");
@@ -33,9 +26,17 @@ void SimDigitalGeomCellId::bookTuples(const marlin::Processor* proc) {
   streamlog_out(DEBUG) << "it has " << _tupleStep->columns() << " columns" << std::endl;
 }
 
+SimDigitalGeomCellId_Base::SimDigitalGeomCellId_Base() : _normal(), _Iaxis(), _Jaxis() /*, _debugGeomHit(new DebugGeomHit())*/ {}
+
+SimDigitalGeomCellId_Base::~SimDigitalGeomCellId_Base() {
+  /*if (_debugGeomHit != nullptr) {
+    delete _debugGeomHit;
+    _debugGeomHit = nullptr;
+  }*/
+}
+
 SimDigitalGeomCellId::SimDigitalGeomCellId(LCCollection* inputCol, LCCollectionVec* outputCol)
-    : _decoder(inputCol), _encoder(inputCol->getParameters().getStringVal(LCIO::CellIDEncoding), outputCol), _normal(),
-      _Iaxis(), _Jaxis() {
+    : SimDigitalGeomCellId_Base(), _decoder(inputCol), _encoder(inputCol->getParameters().getStringVal(LCIO::CellIDEncoding), outputCol) {
   outputCol->parameters().setValue(LCIO::CellIDEncoding, inputCol->getParameters().getStringVal(LCIO::CellIDEncoding));
   _cellIDEncodingString = inputCol->getParameters().getStringVal(LCIO::CellIDEncoding);
 }
@@ -278,39 +279,12 @@ std::vector<StepAndCharge> SimDigitalGeomCellId::decode(SimCalorimeterHit* hit, 
 
   this->createStepAndChargeVec(hit, stepsInIJZcoord, link);
 
-  fillDebugTupleGeometryHit();
+  //fillDebugTupleGeometryHit();
+  //_debugGeomHit->fill(this);
+  DebugGeomHit::fill(this);
   fillDebugTupleGeometryStep(hit, stepsInIJZcoord);
 
   return stepsInIJZcoord;
-}
-
-void SimDigitalGeomCellId::fillDebugTupleGeometryHit() {
-  // these tuples are for debugging geometry aspects
-  if (_tupleHit != nullptr) {
-    _tupleHit->fill(TH_CHTLAYOUT, int(_currentHCALCollectionCaloLayout));
-    _tupleHit->fill(TH_MODULE, _module);
-    _tupleHit->fill(TH_TOWER, _tower);
-    _tupleHit->fill(TH_STAVE, _stave);
-    _tupleHit->fill(TH_LAYER, _trueLayer);
-    _tupleHit->fill(TH_I, _Iy);
-    _tupleHit->fill(TH_J, _Jz);
-    if (_hitPosition != NULL) {
-      _tupleHit->fill(TH_X, _hitPosition[0]); // x
-      _tupleHit->fill(TH_Y, _hitPosition[1]); // y
-      _tupleHit->fill(TH_Z, _hitPosition[2]); // z
-    } else {
-      float notset = -88888;
-      _tupleHit->fill(TH_X, notset);
-      _tupleHit->fill(TH_Y, notset);
-      _tupleHit->fill(TH_Z, notset);
-    }
-    for (int i = 0; i < 3; i++) {
-      _tupleHit->fill(TH_NORMALX + i, _normal[i]);
-      _tupleHit->fill(TH_IX + i, _Iaxis[i]);
-      _tupleHit->fill(TH_JX + i, _Jaxis[i]);
-    }
-    _tupleHit->addRow();
-  }
 }
 
 void SimDigitalGeomCellId::fillDebugTupleGeometryStep(SimCalorimeterHit* hit,

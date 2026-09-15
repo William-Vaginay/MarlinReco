@@ -466,8 +466,10 @@ void SimDigitalProcessor<InputTraits>::processCollection(collectionType* inputCo
 
 template <typename InputTraits> 
 void SimDigitalProcessor<InputTraits>::processEvent(eventType* evt) {
-  if (isFirstEvent())
+  if (isFirstEvent()) {
+    DebugGeomHit::bookTuples(this);
     SimDigitalGeomCellId::bookTuples(this);
+  }
 
   _counters["|ALL"]++;
   _counters["NSim"] = 0;

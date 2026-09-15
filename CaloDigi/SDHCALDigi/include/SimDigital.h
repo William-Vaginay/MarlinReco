@@ -27,6 +27,7 @@
 #include "ChargeSpreader.h"
 #include "EfficiencyManager.h"
 #include "SimDigitalGeom.h"
+#include "DebugGeomHit.h"
 
 class TH1F;
 class TF1;
