@@ -49,7 +49,7 @@ public:
   SimDigitalGeomCellId_Base();
   virtual ~SimDigitalGeomCellId_Base();
 
-  void setCellSize(float size) { _cellSize = size; }
+  void setCellSize(float size) { this->_cellSize = size; }
   virtual float getCellSize() = 0;
 
   int I() const { return _Iy; }
@@ -90,8 +90,16 @@ protected:
   CHT::Layout _currentHCALCollectionCaloLayout = CHT::any;
 };
 
+template <typename InputTraits>
 class SimDigitalGeomCellId : public SimDigitalGeomCellId_Base {
 public:
+  using eventType =         typename InputTraits::eventType;
+  using collectionType =    typename InputTraits::collectionType;
+  using collectionVecType = typename InputTraits::collectionVecType;
+  using simcalohitType =    typename InputTraits::simcalohitType;
+  using calohitType =       typename InputTraits::calohitType;
+  using flagType =          typename InputTraits::flagType;
+
   SimDigitalGeomCellId(LCCollection* inputCol, LCCollectionVec* outputCol);
   virtual ~SimDigitalGeomCellId();
 
@@ -120,7 +128,8 @@ protected:
 
 };
 
-class SimDigitalGeomCellIdLCGEO : public SimDigitalGeomCellId {
+template <typename InputTraits>
+class SimDigitalGeomCellIdLCGEO : public SimDigitalGeomCellId<InputTraits> {
 public:
   SimDigitalGeomCellIdLCGEO(LCCollection* inputCol, LCCollectionVec* outputCol);
   virtual ~SimDigitalGeomCellIdLCGEO();
@@ -141,13 +150,14 @@ protected:
   dd4hep::rec::LayeredCalorimeterData* _caloData = nullptr;
 };
 
-class SimDigitalGeomCellIdPROTO : public SimDigitalGeomCellId {
+template <typename InputTraits>
+class SimDigitalGeomCellIdPROTO : public SimDigitalGeomCellId<InputTraits> {
 public:
   SimDigitalGeomCellIdPROTO(LCCollection* inputCol, LCCollectionVec* outputCol);
   virtual ~SimDigitalGeomCellIdPROTO();
 
-  void setCellSize(float size) { _cellSize = size; }
-  virtual float getCellSize() { return _cellSize; }
+  void setCellSize(float size) { this->_cellSize = size; }
+  virtual float getCellSize() { return this->_cellSize; }
   virtual void setLayerLayout(CHT::Layout layout);
 
   virtual std::unique_ptr<CalorimeterHitImpl> encode(int delta_I, int delta_J);

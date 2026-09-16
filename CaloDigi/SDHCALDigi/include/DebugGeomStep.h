@@ -1,17 +1,21 @@
 #ifndef DebugGeomStep_h
 #define DebugGeomStep_h
 
+#include "InputTraits.h"
+
 #include <marlin/Processor.h>
 
 #include <EVENT/SimCalorimeterHit.h>
 #include <AIDA/ITuple.h>
 
+template <typename InputTraits>
 class SimDigitalGeomCellId;
 struct StepAndCharge;
 
+template <typename InputTraits>
 class DebugGeomStep {
 public:
-    static void fill(SimDigitalGeomCellId* geomCellId, SimCalorimeterHit* hit, const std::vector<StepAndCharge>& stepsInIJZcoord);
+    static void fill(SimDigitalGeomCellId<InputTraits>* geomCellId, SimCalorimeterHit* hit, const std::vector<StepAndCharge>& stepsInIJZcoord);
     static void bookTuples(const marlin::Processor* proc);
 
 private:

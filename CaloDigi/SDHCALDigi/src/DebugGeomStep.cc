@@ -5,9 +5,11 @@
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/ITupleFactory.h>
 
-AIDA::ITuple* DebugGeomStep::_tupleStep = NULL;
+template <typename InputTraits>
+AIDA::ITuple* DebugGeomStep<InputTraits>::_tupleStep = NULL;
 
-void DebugGeomStep::fill(SimDigitalGeomCellId* geomCellId, SimCalorimeterHit* hit, const std::vector<StepAndCharge>& stepsInIJZcoord) {
+template <typename InputTraits>
+void DebugGeomStep<InputTraits>::fill(SimDigitalGeomCellId<InputTraits>* geomCellId, SimCalorimeterHit* hit, const std::vector<StepAndCharge>& stepsInIJZcoord) {
   if (_tupleStep != nullptr) {
     int nsteps = hit->getNMCContributions();
     float notset = -88888;
@@ -42,10 +44,13 @@ void DebugGeomStep::fill(SimDigitalGeomCellId* geomCellId, SimCalorimeterHit* hi
   }
 }
 
-void DebugGeomStep::bookTuples(const marlin::Processor* proc) {
+template <typename InputTraits>
+void DebugGeomStep<InputTraits>::bookTuples(const marlin::Processor* proc) {
   _tupleStep = AIDAProcessor::tupleFactory(proc)->create(
       "SimDigitalStep", "SimDigital_DebugStep",
       "int chtlayout,hitcellid,nstep, float hitx,hity,hitz,stepx,stepy,stepz,deltaI,deltaJ,deltaLayer,time");
   streamlog_out(DEBUG) << "Tuple for Step has been initialized to " << _tupleStep << std::endl;
   streamlog_out(DEBUG) << "it has " << _tupleStep->columns() << " columns" << std::endl;
 }
+
+template class DebugGeomStep<ILCInputTraits>; 

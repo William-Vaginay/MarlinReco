@@ -20,39 +20,46 @@ SimDigitalGeomCellId_Base::SimDigitalGeomCellId_Base() : _normal(), _Iaxis(), _J
 
 SimDigitalGeomCellId_Base::~SimDigitalGeomCellId_Base() {}
 
-SimDigitalGeomCellId::SimDigitalGeomCellId(LCCollection* inputCol, LCCollectionVec* outputCol)
+template <typename InputTraits>
+SimDigitalGeomCellId<InputTraits>::SimDigitalGeomCellId(LCCollection* inputCol, LCCollectionVec* outputCol)
     : SimDigitalGeomCellId_Base(), _decoder(inputCol), _encoder(inputCol->getParameters().getStringVal(LCIO::CellIDEncoding), outputCol) {
   outputCol->parameters().setValue(LCIO::CellIDEncoding, inputCol->getParameters().getStringVal(LCIO::CellIDEncoding));
   _cellIDEncodingString = inputCol->getParameters().getStringVal(LCIO::CellIDEncoding);
 }
 
-SimDigitalGeomCellIdLCGEO::SimDigitalGeomCellIdLCGEO(LCCollection* inputCol, LCCollectionVec* outputCol)
-    : SimDigitalGeomCellId(inputCol, outputCol)
+template <typename InputTraits>
+SimDigitalGeomCellIdLCGEO<InputTraits>::SimDigitalGeomCellIdLCGEO(LCCollection* inputCol, LCCollectionVec* outputCol)
+    : SimDigitalGeomCellId<InputTraits>(inputCol, outputCol)
 //	  theDetector()
 {
   streamlog_out(DEBUG) << "we will use lcgeo!" << std::endl;
 }
 
-SimDigitalGeomCellIdPROTO::SimDigitalGeomCellIdPROTO(LCCollection* inputCol, LCCollectionVec* outputCol)
-    : SimDigitalGeomCellId(inputCol, outputCol)
+template <typename InputTraits>
+SimDigitalGeomCellIdPROTO<InputTraits>::SimDigitalGeomCellIdPROTO(LCCollection* inputCol, LCCollectionVec* outputCol)
+    : SimDigitalGeomCellId<InputTraits>(inputCol, outputCol)
 //	  theDetector()
 {
   streamlog_out(DEBUG) << "we will use proto!" << std::endl;
 
-  _normal.set(0, 0, 1);
-  _Iaxis.set(1, 0, 0);
-  _Jaxis.set(0, 1, 0);
+  this->_normal.set(0, 0, 1);
+  this->_Iaxis.set(1, 0, 0);
+  this->_Jaxis.set(0, 1, 0);
 
-  _currentHCALCollectionCaloLayout = CHT::endcap;
+  this->_currentHCALCollectionCaloLayout = CHT::endcap;
 }
 
-SimDigitalGeomCellId::~SimDigitalGeomCellId() {}
+template <typename InputTraits>
+SimDigitalGeomCellId<InputTraits>::~SimDigitalGeomCellId() {}
 
-SimDigitalGeomCellIdLCGEO::~SimDigitalGeomCellIdLCGEO() {}
+template <typename InputTraits>
+SimDigitalGeomCellIdLCGEO<InputTraits>::~SimDigitalGeomCellIdLCGEO() {}
 
-SimDigitalGeomCellIdPROTO::~SimDigitalGeomCellIdPROTO() {}
+template <typename InputTraits>
+SimDigitalGeomCellIdPROTO<InputTraits>::~SimDigitalGeomCellIdPROTO() {}
 
-void SimDigitalGeomCellId::createStepAndChargeVec(SimCalorimeterHit* hit, std::vector<StepAndCharge>& vec, bool link) {
+template <typename InputTraits>
+void SimDigitalGeomCellId<InputTraits>::createStepAndChargeVec(SimCalorimeterHit* hit, std::vector<StepAndCharge>& vec, bool link) {
   LCVector3D hitPos;
   if (NULL != _hitPosition)
     hitPos.set(_hitPosition[0], _hitPosition[1], _hitPosition[2]);
@@ -111,7 +118,8 @@ void SimDigitalGeomCellId::createStepAndChargeVec(SimCalorimeterHit* hit, std::v
     streamlog_out(MESSAGE) << "no Steps in hit" << std::endl;
 }
 
-void SimDigitalGeomCellId::linkSteps(std::vector<StepAndCharge>& vec) {
+template <typename InputTraits>
+void SimDigitalGeomCellId<InputTraits>::linkSteps(std::vector<StepAndCharge>& vec) {
   if (vec.size() < 2)
     return;
 
@@ -133,34 +141,35 @@ void SimDigitalGeomCellId::linkSteps(std::vector<StepAndCharge>& vec) {
   vec.push_back(StepAndCharge(pos, totalLength, time));
 }
 
-void SimDigitalGeomCellIdLCGEO::processGeometry(SimCalorimeterHit* hit) {
-  _cellIDvalue = _decoder(hit).getValue();
+template <typename InputTraits>
+void SimDigitalGeomCellIdLCGEO<InputTraits>::processGeometry(SimCalorimeterHit* hit) {
+  this->_cellIDvalue = this->_decoder(hit).getValue();
 
-  _trueLayer = _decoder(hit)[_encodingString.at(0)] - 1;
-  _stave = _decoder(hit)[_encodingString.at(1)]; // +1
-  _module = _decoder(hit)[_encodingString.at(2)];
+  this->_trueLayer = this->_decoder(hit)[this->_encodingString.at(0)] - 1;
+  this->_stave = this->_decoder(hit)[this->_encodingString.at(1)]; // +1
+  this->_module = this->_decoder(hit)[this->_encodingString.at(2)];
 
   if (_encodingString.at(3).size() != 0)
-    _tower = _decoder(hit)[_encodingString.at(3)];
+    this->_tower = this->_decoder(hit)[_encodingString.at(3)];
 
-  _Iy = _decoder(hit)[_encodingString.at(4)];
+  this->_Iy = this->_decoder(hit)[_encodingString.at(4)];
   try {
-    _Jz = _decoder(hit)[_encodingString.at(5)];
+    this->_Jz = this->_decoder(hit)[_encodingString.at(5)];
   } catch (lcio::Exception&) {
     _encodingString.at(5) = "z";
 
     try {
-      _Jz = _decoder(hit)[_encodingString.at(5)];
+      this->_Jz = this->_decoder(hit)[_encodingString.at(5)];
     } catch (lcio::Exception&) {
       _encodingString.at(5) = "y";
-      _Jz = _decoder(hit)[_encodingString.at(5)];
+      this->_Jz = this->_decoder(hit)[_encodingString.at(5)];
     }
   }
 
   // _slice     = _decoder( hit )["slice"];
-  _hitPosition = hit->getPosition();
-  if (abs(_Iy) < 1 && abs(_Iy) != 0.0)
-    streamlog_out(DEBUG) << "_Iy, _Jz:" << _Iy << " " << _Jz << std::endl;
+  this->_hitPosition = hit->getPosition();
+  if (abs(this->_Iy) < 1 && abs(this->_Iy) != 0.0)
+    streamlog_out(DEBUG) << "_Iy, _Jz:" << this->_Iy << " " << this->_Jz << std::endl;
   // if(_module==0||_module==6) streamlog_out( DEBUG )<<"tower "<<_tower<<" layer "<<_trueLayer<<" stave "<<_stave<<"
   // module "<<_module<<std::endl;
   //<<" Iy " << _Iy <<"  Jz "<<_Jz<<" hitPosition "<<_hitPosition<<std::endl
@@ -170,7 +179,7 @@ void SimDigitalGeomCellIdLCGEO::processGeometry(SimCalorimeterHit* hit) {
   dd4hep::Detector& ild = dd4hep::Detector::getInstance();
   dd4hep::rec::CellIDPositionConverter idposConv(ild);
 
-  dd4hep::BitField64 idDecoder(_cellIDEncodingString);
+  dd4hep::BitField64 idDecoder(this->_cellIDEncodingString);
 
   const dd4hep::CellID id0 = hit->getCellID0();
   const dd4hep::CellID id1 = hit->getCellID1();
@@ -242,22 +251,24 @@ void SimDigitalGeomCellIdLCGEO::processGeometry(SimCalorimeterHit* hit) {
   dir_i = dir_i.Unit();
   dir_j = dir_j.Unit();
 
-  _normal.set(dir_layer.X(), dir_layer.Y(), dir_layer.Z());
-  _Iaxis.set(dir_i.X(), dir_i.Y(), dir_i.Z());
-  _Jaxis.set(dir_j.X(), dir_j.Y(), dir_j.Z());
+  this->_normal.set(dir_layer.X(), dir_layer.Y(), dir_layer.Z());
+  this->_Iaxis.set(dir_i.X(), dir_i.Y(), dir_i.Z());
+  this->_Jaxis.set(dir_j.X(), dir_j.Y(), dir_j.Z());
 }
 
-void SimDigitalGeomCellIdPROTO::processGeometry(SimCalorimeterHit* hit) {
-  _cellIDvalue = _decoder(hit).getValue();
+template <typename InputTraits>
+void SimDigitalGeomCellIdPROTO<InputTraits>::processGeometry(SimCalorimeterHit* hit) {
+  this->_cellIDvalue = this->_decoder(hit).getValue();
 
-  _trueLayer = _decoder(hit)[_encodingString.at(0)];
-  _Iy = _decoder(hit)[_encodingString.at(4)];
-  _Jz = _decoder(hit)[_encodingString.at(5)];
+  this->_trueLayer = this->_decoder(hit)[_encodingString.at(0)];
+  this->_Iy = this->_decoder(hit)[_encodingString.at(4)];
+  this->_Jz = this->_decoder(hit)[_encodingString.at(5)];
 
-  _hitPosition = hit->getPosition();
+  this->_hitPosition = hit->getPosition();
 }
 
-std::vector<StepAndCharge> SimDigitalGeomCellId::decode(SimCalorimeterHit* hit, bool link) {
+template <typename InputTraits>
+std::vector<StepAndCharge> SimDigitalGeomCellId<InputTraits>::decode(SimCalorimeterHit* hit, bool link) {
   this->processGeometry(hit);
 
   std::vector<StepAndCharge> stepsInIJZcoord;
@@ -265,66 +276,69 @@ std::vector<StepAndCharge> SimDigitalGeomCellId::decode(SimCalorimeterHit* hit, 
   this->createStepAndChargeVec(hit, stepsInIJZcoord, link);
 
   DebugGeomHit::fill(this);
-  DebugGeomStep::fill(this, hit, stepsInIJZcoord);
+  DebugGeomStep<InputTraits>::fill(this, hit, stepsInIJZcoord);
 
   return stepsInIJZcoord;
 }
 
-std::unique_ptr<CalorimeterHitImpl> SimDigitalGeomCellIdLCGEO::encode(int delta_I, int delta_J) {
-  _encoder.setValue(_cellIDvalue);
+template <typename InputTraits>
+std::unique_ptr<CalorimeterHitImpl> SimDigitalGeomCellIdLCGEO<InputTraits>::encode(int delta_I, int delta_J) {
+  this->_encoder.setValue(this->_cellIDvalue);
 
-  int RealIy = _Iy + delta_I;
-  int RealJz = _Jz + delta_J;
+  int RealIy = this->_Iy + delta_I;
+  int RealJz = this->_Jz + delta_J;
 
-  _encoder[_encodingString.at(4)] = RealIy;
-  _encoder[_encodingString.at(5)] = RealJz;
+  this->_encoder[_encodingString.at(4)] = RealIy;
+  this->_encoder[_encodingString.at(5)] = RealJz;
 
   std::unique_ptr<CalorimeterHitImpl> hit(new CalorimeterHitImpl);
-  _encoder.setCellID(hit.get());
+  this->_encoder.setCellID(hit.get());
 
-  hit->setType(CHT(CHT::had, CHT::hcal, _currentHCALCollectionCaloLayout, _trueLayer));
+  hit->setType(CHT(CHT::had, CHT::hcal, this->_currentHCALCollectionCaloLayout, this->_trueLayer));
 
   float posB[3];
-  posB[0] = static_cast<float>(_hitPosition[0] + getCellSize() * (delta_I * _Iaxis.x() + delta_J * _Jaxis.x()));
-  posB[1] = static_cast<float>(_hitPosition[1] + getCellSize() * (delta_I * _Iaxis.y() + delta_J * _Jaxis.y()));
-  posB[2] = static_cast<float>(_hitPosition[2] + getCellSize() * (delta_I * _Iaxis.z() + delta_J * _Jaxis.z()));
+  posB[0] = static_cast<float>(this->_hitPosition[0] + getCellSize() * (delta_I * this->_Iaxis.x() + delta_J * this->_Jaxis.x()));
+  posB[1] = static_cast<float>(this->_hitPosition[1] + getCellSize() * (delta_I * this->_Iaxis.y() + delta_J * this->_Jaxis.y()));
+  posB[2] = static_cast<float>(this->_hitPosition[2] + getCellSize() * (delta_I * this->_Iaxis.z() + delta_J * this->_Jaxis.z()));
   hit->setPosition(posB);
 
   return hit;
 }
 
-std::unique_ptr<CalorimeterHitImpl> SimDigitalGeomCellIdPROTO::encode(int delta_I, int delta_J) {
-  _encoder.setValue(_cellIDvalue);
+template <typename InputTraits>
+std::unique_ptr<CalorimeterHitImpl> SimDigitalGeomCellIdPROTO<InputTraits>::encode(int delta_I, int delta_J) {
+  this->_encoder.setValue(this->_cellIDvalue);
 
-  int RealIy = _Iy + delta_I;
-  int RealJz = _Jz + delta_J;
+  int RealIy = this->_Iy + delta_I;
+  int RealJz = this->_Jz + delta_J;
 
   if (RealIy < 0 || RealJz < 0)
     return std::unique_ptr<CalorimeterHitImpl>(nullptr);
 
-  _encoder[_encodingString.at(4)] = RealIy;
-  _encoder[_encodingString.at(5)] = RealJz;
+  this->_encoder[_encodingString.at(4)] = RealIy;
+  this->_encoder[_encodingString.at(5)] = RealJz;
 
   std::unique_ptr<CalorimeterHitImpl> hit(new CalorimeterHitImpl);
-  _encoder.setCellID(hit.get());
+  this->_encoder.setCellID(hit.get());
 
-  hit->setType(CHT(CHT::had, CHT::hcal, _currentHCALCollectionCaloLayout, _trueLayer));
+  hit->setType(CHT(CHT::had, CHT::hcal, this->_currentHCALCollectionCaloLayout, this->_trueLayer));
 
   float posB[3];
-  posB[0] = static_cast<float>(_hitPosition[0] + getCellSize() * (delta_I * _Iaxis.x() + delta_J * _Jaxis.x()));
-  posB[1] = static_cast<float>(_hitPosition[1] + getCellSize() * (delta_I * _Iaxis.y() + delta_J * _Jaxis.y()));
-  posB[2] = static_cast<float>(_hitPosition[2] + getCellSize() * (delta_I * _Iaxis.z() + delta_J * _Jaxis.z()));
+  posB[0] = static_cast<float>(this->_hitPosition[0] + getCellSize() * (delta_I * this->_Iaxis.x() + delta_J * this->_Jaxis.x()));
+  posB[1] = static_cast<float>(this->_hitPosition[1] + getCellSize() * (delta_I * this->_Iaxis.y() + delta_J * this->_Jaxis.y()));
+  posB[2] = static_cast<float>(this->_hitPosition[2] + getCellSize() * (delta_I * this->_Iaxis.z() + delta_J * this->_Jaxis.z()));
   hit->setPosition(posB);
 
   return hit;
 }
 
-void SimDigitalGeomCellIdLCGEO::setLayerLayout(CHT::Layout layout) {
-  _currentHCALCollectionCaloLayout = layout;
+template <typename InputTraits>
+void SimDigitalGeomCellIdLCGEO<InputTraits>::setLayerLayout(CHT::Layout layout) {
+  this->_currentHCALCollectionCaloLayout = layout;
 
   dd4hep::Detector& ild = dd4hep::Detector::getInstance();
 
-  if (_currentHCALCollectionCaloLayout == CHT::barrel) {
+  if (this->_currentHCALCollectionCaloLayout == CHT::barrel) {
     const std::vector<dd4hep::DetElement>& det = dd4hep::DetectorSelector(ild).detectors(
         (dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::BARREL),
         (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
@@ -333,7 +347,7 @@ void SimDigitalGeomCellIdLCGEO::setLayerLayout(CHT::Layout layout) {
     // streamlog_out( DEBUG ) << "det size: " << det.size() << ", type: " << det.at(0).type() << endl;
   }
 
-  if (_currentHCALCollectionCaloLayout == CHT::ring) {
+  if (this->_currentHCALCollectionCaloLayout == CHT::ring) {
     const std::vector<dd4hep::DetElement>& det = dd4hep::DetectorSelector(ild).detectors(
         (dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::AUXILIARY),
         dd4hep::DetType::FORWARD);
@@ -343,7 +357,7 @@ void SimDigitalGeomCellIdLCGEO::setLayerLayout(CHT::Layout layout) {
     // streamlog_out( DEBUG ) << "det size: " << det.size() << ", type: " << det.at(0).type() << endl;
   }
 
-  if (_currentHCALCollectionCaloLayout == CHT::endcap) {
+  if (this->_currentHCALCollectionCaloLayout == CHT::endcap) {
     const std::vector<dd4hep::DetElement>& det = dd4hep::DetectorSelector(ild).detectors(
         (dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::ENDCAP),
         (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
@@ -353,18 +367,20 @@ void SimDigitalGeomCellIdLCGEO::setLayerLayout(CHT::Layout layout) {
   }
 }
 
-void SimDigitalGeomCellIdPROTO::setLayerLayout(CHT::Layout layout) { _currentHCALCollectionCaloLayout = layout; }
+template <typename InputTraits>
+void SimDigitalGeomCellIdPROTO<InputTraits>::setLayerLayout(CHT::Layout layout) { this->_currentHCALCollectionCaloLayout = layout; }
 
-float SimDigitalGeomCellIdLCGEO::getCellSize() {
+template <typename InputTraits>
+float SimDigitalGeomCellIdLCGEO<InputTraits>::getCellSize() {
   float cellSize = 0.f;
   const double CM2MM = 10.0;
 
-  if (_cellSize > 0.0f)
-    return _cellSize;
+  if (this->_cellSize > 0.0f)
+    return this->_cellSize;
 
   if (_caloData != nullptr) {
     const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& hcalBarrelLayers = _caloData->layers;
-    cellSize = hcalBarrelLayers[_trueLayer].cellSize0 * CM2MM;
+    cellSize = hcalBarrelLayers[this->_trueLayer].cellSize0 * CM2MM;
   }
 
   if (cellSize < std::numeric_limits<float>::epsilon())
@@ -372,3 +388,7 @@ float SimDigitalGeomCellIdLCGEO::getCellSize() {
 
   return cellSize;
 }
+
+template class SimDigitalGeomCellId<ILCInputTraits>;
+template class SimDigitalGeomCellIdLCGEO<ILCInputTraits>;
+template class SimDigitalGeomCellIdPROTO<ILCInputTraits>;

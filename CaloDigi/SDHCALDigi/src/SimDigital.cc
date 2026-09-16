@@ -265,7 +265,7 @@ void SimDigitalProcessor<InputTraits>::fillTupleStep(const std::vector<StepAndCh
 }
 
 template <typename InputTraits>
-SimDigitalProcessor<InputTraits>::cellIDHitMap SimDigitalProcessor<InputTraits>::createPotentialOutputHits(collectionType* col, SimDigitalGeomCellId* aGeomCellId) {
+SimDigitalProcessor<InputTraits>::cellIDHitMap SimDigitalProcessor<InputTraits>::createPotentialOutputHits(collectionType* col, SimDigitalGeomCellId<InputTraits>* aGeomCellId) {
   cellIDHitMap myHitMap;
 
   int numElements = SimDigital_Data::getNumberOfElements(col);
@@ -425,12 +425,12 @@ void SimDigitalProcessor<InputTraits>::processCollection(collectionType* inputCo
   SimDigital_Data::setValue(SimDigital_Data::parameters(outputRelCol), "ToType", LCIO::SIMCALORIMETERHIT);
   SimDigital_Data::setValue(SimDigital_Data::parameters(outputRelCol), "FromType", LCIO::CALORIMETERHIT);
 
-  SimDigitalGeomCellId* geomCellId = nullptr;
+  SimDigitalGeomCellId<InputTraits>* geomCellId = nullptr;
 
   if (_encodingType == std::string("LCGEO"))
-    geomCellId = new SimDigitalGeomCellIdLCGEO(inputCol, outputCol);
+    geomCellId = new SimDigitalGeomCellIdLCGEO<InputTraits>(inputCol, outputCol);
   else if (_encodingType == std::string("PROTO"))
-    geomCellId = new SimDigitalGeomCellIdPROTO(inputCol, outputCol);
+    geomCellId = new SimDigitalGeomCellIdPROTO<InputTraits>(inputCol, outputCol);
 
   geomCellId->setCellSize(_cellSize);
 
@@ -468,7 +468,7 @@ template <typename InputTraits>
 void SimDigitalProcessor<InputTraits>::processEvent(eventType* evt) {
   if (isFirstEvent()) {
     DebugGeomHit::bookTuples(this);
-    DebugGeomStep::bookTuples(this);
+    DebugGeomStep<InputTraits>::bookTuples(this);
   }
 
   _counters["|ALL"]++;

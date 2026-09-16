@@ -118,7 +118,7 @@ private:
 
   void processCollection(collectionType* inputCol, collectionVecType*& outputCol, collectionVecType*& outputRelCol,
                          CHT::Layout layout);
-  cellIDHitMap createPotentialOutputHits(collectionType* col, SimDigitalGeomCellId* aGeomCellId);
+  cellIDHitMap createPotentialOutputHits(collectionType* col, SimDigitalGeomCellId<InputTraits>* aGeomCellId);
 
   void removeAdjacentStep(std::vector<StepAndCharge>& vec);
   void fillTupleStep(const std::vector<StepAndCharge>& vec, int level);
