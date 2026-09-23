@@ -20,6 +20,28 @@ SimDigitalGeomCellId_Base::SimDigitalGeomCellId_Base() : _normal(), _Iaxis(), _J
 
 SimDigitalGeomCellId_Base::~SimDigitalGeomCellId_Base() {}
 
+void SimDigitalGeomCellId_Base::linkSteps(std::vector<StepAndCharge>& vec) {
+  if (vec.size() < 2)
+    return;
+
+  float time = std::numeric_limits<float>::max();
+  float totalLength = 0;
+  LCVector3D pos(0, 0, 0);
+
+  for (const auto& step : vec) {
+    totalLength += step.stepLength;
+    pos += step.step * step.stepLength;
+    time = std::min(time, step.time);
+  }
+  pos /= totalLength;
+
+  totalLength = static_cast<float>((vec.front().step - vec.back().step).mag() +
+                                   0.5f * (vec.front().stepLength + vec.back().stepLength));
+
+  vec.clear();
+  vec.push_back(StepAndCharge(pos, totalLength, time));
+}
+
 template <typename InputTraits>
 SimDigitalGeomCellId<InputTraits>::SimDigitalGeomCellId(LCCollection* inputCol, LCCollectionVec* outputCol)
     : SimDigitalGeomCellId_Base(), _decoder(inputCol), _encoder(inputCol->getParameters().getStringVal(LCIO::CellIDEncoding), outputCol) {
@@ -116,29 +138,6 @@ void SimDigitalGeomCellId<InputTraits>::createStepAndChargeVec(SimCalorimeterHit
 
   if (vec.empty())
     streamlog_out(MESSAGE) << "no Steps in hit" << std::endl;
-}
-
-template <typename InputTraits>
-void SimDigitalGeomCellId<InputTraits>::linkSteps(std::vector<StepAndCharge>& vec) {
-  if (vec.size() < 2)
-    return;
-
-  float time = std::numeric_limits<float>::max();
-  float totalLength = 0;
-  LCVector3D pos(0, 0, 0);
-
-  for (const auto& step : vec) {
-    totalLength += step.stepLength;
-    pos += step.step * step.stepLength;
-    time = std::min(time, step.time);
-  }
-  pos /= totalLength;
-
-  totalLength = static_cast<float>((vec.front().step - vec.back().step).mag() +
-                                   0.5f * (vec.front().stepLength + vec.back().stepLength));
-
-  vec.clear();
-  vec.push_back(StepAndCharge(pos, totalLength, time));
 }
 
 template <typename InputTraits>

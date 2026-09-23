@@ -71,6 +71,7 @@ public:
   void operator=(const SimDigitalGeomCellId_Base& toCopy) = delete;
 
 protected:
+  void linkSteps(std::vector<StepAndCharge>& vec);
 
   float _cellSize = 0.0f;
 
@@ -110,8 +111,6 @@ public:
 protected:
   virtual void processGeometry(SimCalorimeterHit* hit) = 0;
   void createStepAndChargeVec(SimCalorimeterHit* hit, std::vector<StepAndCharge>& vec, bool link);
-
-  void linkSteps(std::vector<StepAndCharge>& vec);
 
 public:
   virtual std::unique_ptr<CalorimeterHitImpl> encode(int delta_I, int delta_J) = 0;
@@ -156,7 +155,6 @@ public:
   SimDigitalGeomCellIdPROTO(LCCollection* inputCol, LCCollectionVec* outputCol);
   virtual ~SimDigitalGeomCellIdPROTO();
 
-  void setCellSize(float size) { this->_cellSize = size; }
   virtual float getCellSize() { return this->_cellSize; }
   virtual void setLayerLayout(CHT::Layout layout);
 
