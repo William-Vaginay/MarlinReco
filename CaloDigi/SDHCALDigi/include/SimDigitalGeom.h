@@ -6,11 +6,9 @@
 #include <IMPL/LCCollectionVec.h>
 #include <marlin/Processor.h>
 
-#include <UTIL/CellIDDecoder.h>
 #include <UTIL/CellIDEncoder.h>
 
 #include <EVENT/LCGenericObject.h>
-#include <EVENT/SimCalorimeterHit.h>
 #include <IMPL/CalorimeterHitImpl.h>
 
 #include "CalorimeterHitType.h" //in MarlinUtil
@@ -94,23 +92,19 @@ protected:
 template <typename InputTraits>
 class SimDigitalGeomCellId : public SimDigitalGeomCellId_Base {
 public:
-  using eventType =         typename InputTraits::eventType;
-  using collectionType =    typename InputTraits::collectionType;
-  using collectionVecType = typename InputTraits::collectionVecType;
   using simcalohitType =    typename InputTraits::simcalohitType;
-  using calohitType =       typename InputTraits::calohitType;
-  using flagType =          typename InputTraits::flagType;
+  using celliddecoderType = typename InputTraits::celliddecoderType;
 
   SimDigitalGeomCellId(LCCollection* inputCol, LCCollectionVec* outputCol);
   virtual ~SimDigitalGeomCellId();
 
   virtual void setLayerLayout(CHT::Layout layout) = 0;
 
-  std::vector<StepAndCharge> decode(SimCalorimeterHit* hit, bool link);
+  std::vector<StepAndCharge> decode(simcalohitType* hit, bool link);
 
 protected:
-  virtual void processGeometry(SimCalorimeterHit* hit) = 0;
-  void createStepAndChargeVec(SimCalorimeterHit* hit, std::vector<StepAndCharge>& vec, bool link);
+  virtual void processGeometry(simcalohitType* hit) = 0;
+  void createStepAndChargeVec(simcalohitType* hit, std::vector<StepAndCharge>& vec, bool link);
 
 public:
   virtual std::unique_ptr<CalorimeterHitImpl> encode(int delta_I, int delta_J) = 0;
@@ -120,16 +114,17 @@ public:
 
 protected:
   dd4hep::CellID _cellIDvalue = 0;
-  CellIDDecoder<SimCalorimeterHit> _decoder;
+  celliddecoderType _decoder;
   CellIDEncoder<CalorimeterHitImpl> _encoder;
 
   std::string _cellIDEncodingString = "";
-
 };
 
 template <typename InputTraits>
 class SimDigitalGeomCellIdLCGEO : public SimDigitalGeomCellId<InputTraits> {
 public:
+  using simcalohitType = typename InputTraits::simcalohitType;
+
   SimDigitalGeomCellIdLCGEO(LCCollection* inputCol, LCCollectionVec* outputCol);
   virtual ~SimDigitalGeomCellIdLCGEO();
 
@@ -142,7 +137,7 @@ public:
   void operator=(const SimDigitalGeomCellIdLCGEO& toCopy) = delete;
 
 protected:
-  virtual void processGeometry(SimCalorimeterHit* hit);
+  virtual void processGeometry(simcalohitType* hit);
 
   std::vector<std::string> _encodingString = {"layer", "stave", "module", "tower", "x", "y"};
 
@@ -152,6 +147,8 @@ protected:
 template <typename InputTraits>
 class SimDigitalGeomCellIdPROTO : public SimDigitalGeomCellId<InputTraits> {
 public:
+  using simcalohitType = typename InputTraits::simcalohitType;
+
   SimDigitalGeomCellIdPROTO(LCCollection* inputCol, LCCollectionVec* outputCol);
   virtual ~SimDigitalGeomCellIdPROTO();
 
@@ -164,7 +161,7 @@ public:
   void operator=(const SimDigitalGeomCellIdPROTO& toCopy) = delete;
 
 protected:
-  virtual void processGeometry(SimCalorimeterHit* hit);
+  virtual void processGeometry(simcalohitType* hit);
 
   std::vector<std::string> _encodingString = {"K-1", "", "", "", "I", "J"};
 };

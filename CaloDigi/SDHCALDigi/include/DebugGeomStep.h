@@ -15,8 +15,10 @@ struct StepAndCharge;
 template <typename InputTraits>
 class DebugGeomStep {
 public:
-    static void fill(SimDigitalGeomCellId<InputTraits>* geomCellId, SimCalorimeterHit* hit, const std::vector<StepAndCharge>& stepsInIJZcoord);
-    static void bookTuples(const marlin::Processor* proc);
+  using simcalohitType =    typename InputTraits::simcalohitType;
+
+  static void fill(SimDigitalGeomCellId<InputTraits>* geomCellId, simcalohitType* hit, const std::vector<StepAndCharge>& stepsInIJZcoord);
+  static void bookTuples(const marlin::Processor* proc);
 
 private:
   static AIDA::ITuple* _tupleStep;

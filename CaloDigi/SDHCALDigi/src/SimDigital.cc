@@ -30,6 +30,7 @@ using namespace marlin;
 using namespace std;
 
 using SimDigital = SimDigitalProcessor<ILCInputTraits>;
+//using SimDigital = SimDigitalProcessor<WGGInputTraits>;
 SimDigital aSimDigital;
 
 template <typename InputTraits>

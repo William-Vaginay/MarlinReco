@@ -81,48 +81,48 @@ template <typename InputTraits>
 SimDigitalGeomCellIdPROTO<InputTraits>::~SimDigitalGeomCellIdPROTO() {}
 
 template <typename InputTraits>
-void SimDigitalGeomCellId<InputTraits>::createStepAndChargeVec(SimCalorimeterHit* hit, std::vector<StepAndCharge>& vec, bool link) {
+void SimDigitalGeomCellId<InputTraits>::createStepAndChargeVec(simcalohitType* hit, std::vector<StepAndCharge>& vec, bool link) {
   LCVector3D hitPos;
   if (NULL != _hitPosition)
     hitPos.set(_hitPosition[0], _hitPosition[1], _hitPosition[2]);
 
   std::map<unsigned int, std::vector<StepAndCharge>> stepMap;
 
-  if (hit->getNMCContributions() == 0)
+  if (SimDigital_Data::getNMCContributions(hit) == 0)
     return;
 
-  float currentTime = hit->getTimeCont(0);
-  PotentialSameTrackID id(hit->getPDGCont(0), hit->getParticleCont(0)->getPDG());
+  float currentTime = SimDigital_Data::getTimeCont(hit, 0);
+  PotentialSameTrackID id(SimDigital_Data::getPDGCont(hit, 0), SimDigital_Data::getPDG(SimDigital_Data::getParticleCont(hit, 0)));
   unsigned int currentNum = 0;
 
-  for (int imcp = 0; imcp < hit->getNMCContributions(); imcp++) {
+  for (int imcp = 0; imcp < SimDigital_Data::getNMCContributions(hit); imcp++) {
     LCVector3D stepPos;
-    const float* pos = hit->getStepPosition(imcp);
+    const float* pos = SimDigital_Data::getStepPosition(hit, imcp);
     if (NULL != pos) {
       stepPos.set(pos[0], pos[1], pos[2]);
       stepPos -= hitPos;
       stepPos = LCVector3D(stepPos * _Iaxis, stepPos * _Jaxis, stepPos * _normal);
 
-      PotentialSameTrackID stepID(hit->getPDGCont(imcp), hit->getParticleCont(imcp)->getPDG());
+      PotentialSameTrackID stepID(SimDigital_Data::getPDGCont(hit, imcp), SimDigital_Data::getPDG(SimDigital_Data::getParticleCont(hit, imcp)));
 
       if (std::abs(stepPos.z()) < std::numeric_limits<float>::epsilon()) // step in cell center so I assume it is unique
                                                                          // and do not have to be linked
       {
-        vec.push_back(StepAndCharge(stepPos, hit->getLengthCont(imcp), hit->getTimeCont(imcp)));
+        vec.push_back(StepAndCharge(stepPos, SimDigital_Data::getLengthCont(hit, imcp), SimDigital_Data::getTimeCont(hit, imcp)));
         currentNum++;
       } else // put it on the list of steps to be linked
       {
-        if (hit->getTimeCont(imcp) >= currentTime && (stepID == id))
-          stepMap[currentNum].push_back(StepAndCharge(stepPos, hit->getLengthCont(imcp), hit->getTimeCont(imcp)));
+        if (SimDigital_Data::getTimeCont(hit, imcp) >= currentTime && (stepID == id))
+          stepMap[currentNum].push_back(StepAndCharge(stepPos, SimDigital_Data::getLengthCont(hit, imcp), SimDigital_Data::getTimeCont(hit, imcp)));
         else {
           currentNum++;
-          stepMap[currentNum].push_back(StepAndCharge(stepPos, hit->getLengthCont(imcp), hit->getTimeCont(imcp)));
+          stepMap[currentNum].push_back(StepAndCharge(stepPos, SimDigital_Data::getLengthCont(hit, imcp), SimDigital_Data::getTimeCont(hit, imcp)));
         }
       }
 
-      currentTime = hit->getTimeCont(imcp);
-      id.PDGStep = hit->getPDGCont(imcp);
-      id.PDGParent = hit->getParticleCont(imcp)->getPDG();
+      currentTime = SimDigital_Data::getTimeCont(hit, imcp);
+      id.PDGStep = SimDigital_Data::getPDGCont(hit, imcp);
+      id.PDGParent = SimDigital_Data::getPDG(SimDigital_Data::getParticleCont(hit, imcp));
     } else
       streamlog_out(WARNING) << "DIGITISATION : STEP POSITION IS (0,0,0)" << std::endl;
   }
@@ -141,32 +141,32 @@ void SimDigitalGeomCellId<InputTraits>::createStepAndChargeVec(SimCalorimeterHit
 }
 
 template <typename InputTraits>
-void SimDigitalGeomCellIdLCGEO<InputTraits>::processGeometry(SimCalorimeterHit* hit) {
-  this->_cellIDvalue = this->_decoder(hit).getValue();
+void SimDigitalGeomCellIdLCGEO<InputTraits>::processGeometry(simcalohitType* hit) {
+  this->_cellIDvalue = SimDigital_Data::getValue(this->_decoder, hit);
 
-  this->_trueLayer = this->_decoder(hit)[this->_encodingString.at(0)] - 1;
-  this->_stave = this->_decoder(hit)[this->_encodingString.at(1)]; // +1
-  this->_module = this->_decoder(hit)[this->_encodingString.at(2)];
+  this->_trueLayer = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(0)) - 1;
+  this->_stave = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(1)); // +1
+  this->_module = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(2));
 
   if (_encodingString.at(3).size() != 0)
-    this->_tower = this->_decoder(hit)[_encodingString.at(3)];
+    this->_tower = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(3));
 
-  this->_Iy = this->_decoder(hit)[_encodingString.at(4)];
+  this->_Iy = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(4));
   try {
-    this->_Jz = this->_decoder(hit)[_encodingString.at(5)];
+    this->_Jz = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(5));
   } catch (lcio::Exception&) {
     _encodingString.at(5) = "z";
 
     try {
-      this->_Jz = this->_decoder(hit)[_encodingString.at(5)];
+      this->_Jz = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(5));
     } catch (lcio::Exception&) {
       _encodingString.at(5) = "y";
-      this->_Jz = this->_decoder(hit)[_encodingString.at(5)];
+      this->_Jz = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(5));
     }
   }
 
   // _slice     = _decoder( hit )["slice"];
-  this->_hitPosition = hit->getPosition();
+  this->_hitPosition = SimDigital_Data::getPosition(hit);
   if (abs(this->_Iy) < 1 && abs(this->_Iy) != 0.0)
     streamlog_out(DEBUG) << "_Iy, _Jz:" << this->_Iy << " " << this->_Jz << std::endl;
   // if(_module==0||_module==6) streamlog_out( DEBUG )<<"tower "<<_tower<<" layer "<<_trueLayer<<" stave "<<_stave<<"
@@ -180,8 +180,8 @@ void SimDigitalGeomCellIdLCGEO<InputTraits>::processGeometry(SimCalorimeterHit* 
 
   dd4hep::BitField64 idDecoder(this->_cellIDEncodingString);
 
-  const dd4hep::CellID id0 = hit->getCellID0();
-  const dd4hep::CellID id1 = hit->getCellID1();
+  const dd4hep::CellID id0 = SimDigital_Data::getCellID0(hit);
+  const dd4hep::CellID id1 = SimDigital_Data::getCellID1(hit);
 
   idDecoder.setValue(id0, id1);
 
@@ -256,18 +256,19 @@ void SimDigitalGeomCellIdLCGEO<InputTraits>::processGeometry(SimCalorimeterHit* 
 }
 
 template <typename InputTraits>
-void SimDigitalGeomCellIdPROTO<InputTraits>::processGeometry(SimCalorimeterHit* hit) {
-  this->_cellIDvalue = this->_decoder(hit).getValue();
+void SimDigitalGeomCellIdPROTO<InputTraits>::processGeometry(simcalohitType* hit) {
+  this->_cellIDvalue = SimDigital_Data::getValue(this->_decoder, hit);
 
-  this->_trueLayer = this->_decoder(hit)[_encodingString.at(0)];
-  this->_Iy = this->_decoder(hit)[_encodingString.at(4)];
-  this->_Jz = this->_decoder(hit)[_encodingString.at(5)];
+  this->_trueLayer = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(0)) - 1;
+  this->_Iy = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(4));
+  this->_Jz = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(5));
 
-  this->_hitPosition = hit->getPosition();
+ //this->_hitPosition = hit->getPosition();
+this->_hitPosition = SimDigital_Data::getPosition(hit);
 }
 
 template <typename InputTraits>
-std::vector<StepAndCharge> SimDigitalGeomCellId<InputTraits>::decode(SimCalorimeterHit* hit, bool link) {
+std::vector<StepAndCharge> SimDigitalGeomCellId<InputTraits>::decode(simcalohitType* hit, bool link) {
   this->processGeometry(hit);
 
   std::vector<StepAndCharge> stepsInIJZcoord;
@@ -391,3 +392,7 @@ float SimDigitalGeomCellIdLCGEO<InputTraits>::getCellSize() {
 template class SimDigitalGeomCellId<ILCInputTraits>;
 template class SimDigitalGeomCellIdLCGEO<ILCInputTraits>;
 template class SimDigitalGeomCellIdPROTO<ILCInputTraits>;
+
+template class SimDigitalGeomCellId<WGGInputTraits>;
+template class SimDigitalGeomCellIdLCGEO<WGGInputTraits>;
+template class SimDigitalGeomCellIdPROTO<WGGInputTraits>;
