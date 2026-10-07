@@ -83,6 +83,7 @@ public:
   using simcalohitType =    typename InputTraits::simcalohitType;
   using calohitType =       typename InputTraits::calohitType;
   using flagType =          typename InputTraits::flagType;
+  using relationType =      typename InputTraits::relationType;
 
   virtual Processor* newProcessor() { return new SimDigitalProcessor<InputTraits>; }
   SimDigitalProcessor();

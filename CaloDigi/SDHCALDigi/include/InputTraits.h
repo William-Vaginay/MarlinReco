@@ -23,6 +23,7 @@ struct ILCInputTraits {
   using flagType = IMPL::LCFlagImpl;
   using parametersType = EVENT::LCParameters;
   using objectType = EVENT::LCObject;
+  using relationType = IMPL::LCRelationImpl;
 };
 
 struct WGGSimCalorimeterHit {
@@ -33,6 +34,11 @@ struct WGGSimCalorimeterHit {
 struct WGGMCParticle {
   WGGMCParticle(EVENT::MCParticle &mcparticle) : _mcparticle(&mcparticle) {}
   EVENT::MCParticle *_mcparticle;
+};
+
+struct WGGRelation {
+  WGGRelation(IMPL::LCRelationImpl &relation) : _relation(&relation) {}
+  IMPL::LCRelationImpl *_relation;
 };
 
 /*struct WGGCellIDDecoder {
@@ -58,6 +64,7 @@ struct WGGInputTraits {
   using flagType = IMPL::LCFlagImpl;
   using parametersType = EVENT::LCParameters;
   using objectType = EVENT::LCObject;
+  using relationType = WGGRelation;
 };
 
 namespace SimDigital_Data {
@@ -68,7 +75,7 @@ namespace SimDigital_Data {
   inline void addCollection(ILCInputTraits::eventType* evt, ILCInputTraits::collectionVecType* col, const std::string& name) { evt->addCollection(col, name.c_str()); }
 
   inline int getNumberOfElements(const ILCInputTraits::collectionType* col) { return col->getNumberOfElements(); }
-  inline ILCInputTraits::simcalohitType* getElementAt(const ILCInputTraits::collectionType* col, int index) { return dynamic_cast<ILCInputTraits::simcalohitType*>(col->getElementAt(index)); }
+  inline ILCInputTraits::simcalohitType* getElementAt(const ILCInputTraits::collectionType* col, int index, ILCInputTraits*) { return dynamic_cast<ILCInputTraits::simcalohitType*>(col->getElementAt(index)); }
 
   inline void setFlag(ILCInputTraits::collectionVecType* col, const int& flag) { col->setFlag(flag); }
   inline ILCInputTraits::parametersType& parameters(ILCInputTraits::collectionVecType* col) { return col->parameters(); }
@@ -89,7 +96,8 @@ namespace SimDigital_Data {
   inline lcio::long64 getValue(ILCInputTraits::celliddecoderType& decoder, ILCInputTraits::simcalohitType* hit) { return decoder(hit).getValue(); }
   inline int getField(ILCInputTraits::celliddecoderType& decoder, ILCInputTraits::simcalohitType* hit, const std::string& fieldName) { return decoder(hit)[fieldName]; }
 
-  inline void setRawHit(ILCInputTraits::calohitType* hit, ILCInputTraits::objectType* rawHit) { hit->setRawHit(rawHit); }
+  //inline void setRawHit(ILCInputTraits::calohitType* hit, ILCInputTraits::objectType* rawHit) { hit->setRawHit(rawHit); }
+  inline void setRawHit(ILCInputTraits::calohitType* hit, ILCInputTraits::simcalohitType* rawHit) { hit->setRawHit(rawHit); }
   inline float getEnergy(const ILCInputTraits::calohitType* hit) { return hit->getEnergy(); }
   inline void setEnergy(ILCInputTraits::calohitType* hit, float energy) { hit->setEnergy(energy); }
   inline int getCellID0(const ILCInputTraits::calohitType* hit) { return hit->getCellID0(); }
@@ -102,14 +110,16 @@ namespace SimDigital_Data {
 
   // For WGGInputTraits
 
+  inline WGGInputTraits::simcalohitType* getElementAt(const WGGInputTraits::collectionType* col, int index, WGGInputTraits*) { return new WGGInputTraits::simcalohitType (*dynamic_cast<EVENT::SimCalorimeterHit*>(col->getElementAt(index))); }
+
   inline const float* getPosition(const WGGInputTraits::simcalohitType* hit) { return hit->_simhit->getPosition(); }
   inline int getCellID0(const WGGInputTraits::simcalohitType* hit) { return hit->_simhit->getCellID0(); }
   inline int getCellID1(const WGGInputTraits::simcalohitType* hit) { return hit->_simhit->getCellID1(); }
   inline int getNMCContributions(const WGGInputTraits::simcalohitType* hit) { return hit->_simhit->getNMCContributions(); }
   inline float getTimeCont(const WGGInputTraits::simcalohitType* hit, int index) { return hit->_simhit->getTimeCont(index); }
   inline int getPDGCont(const WGGInputTraits::simcalohitType* hit, int index) { return hit->_simhit->getPDGCont(index); }
-  //inline WGGInputTraits::mcparticleType* getParticleCont(const WGGInputTraits::simcalohitType* hit, int index) { return hit->_simhit->getParticleCont(index); }
-  inline ILCInputTraits::mcparticleType* getParticleCont(const WGGInputTraits::simcalohitType* hit, int index) { return hit->_simhit->getParticleCont(index); }
+  inline WGGInputTraits::mcparticleType* getParticleCont(const WGGInputTraits::simcalohitType* hit, int index) { return new WGGInputTraits::mcparticleType(*(hit->_simhit->getParticleCont(index))); }
+  
   inline const float* getStepPosition(const WGGInputTraits::simcalohitType* hit, int index) { return hit->_simhit->getStepPosition(index); }
   inline float getLengthCont(const WGGInputTraits::simcalohitType* hit, int index) { return hit->_simhit->getLengthCont(index); } 
 
@@ -117,6 +127,8 @@ namespace SimDigital_Data {
  
   inline lcio::long64 getValue(WGGInputTraits::celliddecoderType &decoder, WGGInputTraits::simcalohitType* hit) { return decoder(hit->_simhit).getValue(); }
   inline int getField(WGGInputTraits::celliddecoderType &decoder, WGGInputTraits::simcalohitType* hit, const std::string& fieldName) { return decoder(hit->_simhit)[fieldName]; }
+
+  inline void setRawHit(WGGInputTraits::calohitType* hit, WGGInputTraits::simcalohitType* rawHit) { hit->setRawHit(rawHit->_simhit); }
 };
 
 
