@@ -457,8 +457,8 @@ void SimDigitalProcessor<InputTraits>::processCollection(collectionType* inputCo
 
     // put only one relation with the SimCalorimeterHit which contributes most
     simcalohitType* hit = SimDigital_Data::getElementAt(inputCol, currentHitMem.rawHit, static_cast<InputTraits*>(nullptr));
-//    LCRelationImpl* rel = new LCRelationImpl(caloHit, hit->_simhit, 1.0);
-    relationType* rel = new LCRelationImpl(caloHit, hit, 1.0);
+    relationType* rel = nullptr;
+    SimDigital_Data::createRelation(rel, caloHit, hit, 1.0);
     SimDigital_Data::addElement(outputRelCol, rel);
 
   } // end of loop on myHitMap
