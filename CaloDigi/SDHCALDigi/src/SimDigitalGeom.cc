@@ -263,7 +263,6 @@ void SimDigitalGeomCellIdPROTO<InputTraits>::processGeometry(simcalohitType* hit
   this->_Iy = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(4));
   this->_Jz = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(5));
 
- //this->_hitPosition = hit->getPosition();
 this->_hitPosition = SimDigital_Data::getPosition(hit);
 }
 
@@ -282,52 +281,56 @@ std::vector<StepAndCharge> SimDigitalGeomCellId<InputTraits>::decode(simcalohitT
 }
 
 template <typename InputTraits>
-std::unique_ptr<CalorimeterHitImpl> SimDigitalGeomCellIdLCGEO<InputTraits>::encode(int delta_I, int delta_J) {
-  this->_encoder.setValue(this->_cellIDvalue);
+std::unique_ptr<typename InputTraits::calohitType> SimDigitalGeomCellIdLCGEO<InputTraits>::encode(int delta_I, int delta_J) {
+  SimDigital_Data::setValue(this->_encoder, this->_cellIDvalue);
 
   int RealIy = this->_Iy + delta_I;
   int RealJz = this->_Jz + delta_J;
 
-  this->_encoder[_encodingString.at(4)] = RealIy;
-  this->_encoder[_encodingString.at(5)] = RealJz;
+  SimDigital_Data::setField(this->_encoder, this->_encodingString.at(4), RealIy);
+  SimDigital_Data::setField(this->_encoder, this->_encodingString.at(5), RealJz);
 
-  std::unique_ptr<CalorimeterHitImpl> hit(new CalorimeterHitImpl);
-  this->_encoder.setCellID(hit.get());
+  //std::unique_ptr<calohitType> hit(new calohitType);
+  std::unique_ptr<calohitType> hit = nullptr;
+  SimDigital_Data::createCaloHit(hit);
+  SimDigital_Data::setcellID(this->_encoder, hit.get());
 
-  hit->setType(CHT(CHT::had, CHT::hcal, this->_currentHCALCollectionCaloLayout, this->_trueLayer));
+  SimDigital_Data::setType(hit.get(), CHT(CHT::had, CHT::hcal, this->_currentHCALCollectionCaloLayout, this->_trueLayer));
 
   float posB[3];
   posB[0] = static_cast<float>(this->_hitPosition[0] + getCellSize() * (delta_I * this->_Iaxis.x() + delta_J * this->_Jaxis.x()));
   posB[1] = static_cast<float>(this->_hitPosition[1] + getCellSize() * (delta_I * this->_Iaxis.y() + delta_J * this->_Jaxis.y()));
   posB[2] = static_cast<float>(this->_hitPosition[2] + getCellSize() * (delta_I * this->_Iaxis.z() + delta_J * this->_Jaxis.z()));
-  hit->setPosition(posB);
+  SimDigital_Data::setPosition(hit.get(), posB);
 
   return hit;
 }
 
 template <typename InputTraits>
-std::unique_ptr<CalorimeterHitImpl> SimDigitalGeomCellIdPROTO<InputTraits>::encode(int delta_I, int delta_J) {
-  this->_encoder.setValue(this->_cellIDvalue);
+std::unique_ptr<typename InputTraits::calohitType> SimDigitalGeomCellIdPROTO<InputTraits>::encode(int delta_I, int delta_J) {
+  SimDigital_Data::setValue(this->_encoder, this->_cellIDvalue);
 
   int RealIy = this->_Iy + delta_I;
   int RealJz = this->_Jz + delta_J;
 
   if (RealIy < 0 || RealJz < 0)
-    return std::unique_ptr<CalorimeterHitImpl>(nullptr);
+    return std::unique_ptr<calohitType>(nullptr);
 
-  this->_encoder[_encodingString.at(4)] = RealIy;
-  this->_encoder[_encodingString.at(5)] = RealJz;
+  SimDigital_Data::setField(this->_encoder, this->_encodingString.at(4), RealIy);
+  SimDigital_Data::setField(this->_encoder, this->_encodingString.at(5), RealJz);
 
-  std::unique_ptr<CalorimeterHitImpl> hit(new CalorimeterHitImpl);
-  this->_encoder.setCellID(hit.get());
+  //std::unique_ptr<calohitType> hit(new calohitType);
+  std::unique_ptr<calohitType> hit = nullptr;
+  SimDigital_Data::createCaloHit(hit);
+  SimDigital_Data::setcellID(this->_encoder, hit.get());
 
-  hit->setType(CHT(CHT::had, CHT::hcal, this->_currentHCALCollectionCaloLayout, this->_trueLayer));
+  SimDigital_Data::setType(hit.get(), CHT(CHT::had, CHT::hcal, this->_currentHCALCollectionCaloLayout, this->_trueLayer));
 
   float posB[3];
   posB[0] = static_cast<float>(this->_hitPosition[0] + getCellSize() * (delta_I * this->_Iaxis.x() + delta_J * this->_Jaxis.x()));
   posB[1] = static_cast<float>(this->_hitPosition[1] + getCellSize() * (delta_I * this->_Iaxis.y() + delta_J * this->_Jaxis.y()));
   posB[2] = static_cast<float>(this->_hitPosition[2] + getCellSize() * (delta_I * this->_Iaxis.z() + delta_J * this->_Jaxis.z()));
-  hit->setPosition(posB);
+  SimDigital_Data::setPosition(hit.get(), posB);
 
   return hit;
 }

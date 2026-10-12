@@ -6,11 +6,6 @@
 #include <IMPL/LCCollectionVec.h>
 #include <marlin/Processor.h>
 
-#include <UTIL/CellIDEncoder.h>
-
-#include <EVENT/LCGenericObject.h>
-#include <IMPL/CalorimeterHitImpl.h>
-
 #include "CalorimeterHitType.h" //in MarlinUtil
 #include "marlinutil/LCGeometryTypes.h"
 
@@ -94,6 +89,8 @@ class SimDigitalGeomCellId : public SimDigitalGeomCellId_Base {
 public:
   using simcalohitType =    typename InputTraits::simcalohitType;
   using celliddecoderType = typename InputTraits::celliddecoderType;
+  using calohitType =       typename InputTraits::calohitType;
+  using cellidencoderType = typename InputTraits::cellidencoderType;
 
   SimDigitalGeomCellId(LCCollection* inputCol, LCCollectionVec* outputCol);
   virtual ~SimDigitalGeomCellId();
@@ -107,7 +104,7 @@ protected:
   void createStepAndChargeVec(simcalohitType* hit, std::vector<StepAndCharge>& vec, bool link);
 
 public:
-  virtual std::unique_ptr<CalorimeterHitImpl> encode(int delta_I, int delta_J) = 0;
+  virtual std::unique_ptr<calohitType> encode(int delta_I, int delta_J) = 0;
 
   SimDigitalGeomCellId(const SimDigitalGeomCellId& toCopy) = delete;
   void operator=(const SimDigitalGeomCellId& toCopy) = delete;
@@ -115,7 +112,7 @@ public:
 protected:
   dd4hep::CellID _cellIDvalue = 0;
   celliddecoderType _decoder;
-  CellIDEncoder<CalorimeterHitImpl> _encoder;
+  cellidencoderType _encoder;
 
   std::string _cellIDEncodingString = "";
 };
@@ -124,6 +121,7 @@ template <typename InputTraits>
 class SimDigitalGeomCellIdLCGEO : public SimDigitalGeomCellId<InputTraits> {
 public:
   using simcalohitType = typename InputTraits::simcalohitType;
+  using calohitType = typename InputTraits::calohitType;
 
   SimDigitalGeomCellIdLCGEO(LCCollection* inputCol, LCCollectionVec* outputCol);
   virtual ~SimDigitalGeomCellIdLCGEO();
@@ -131,7 +129,7 @@ public:
   virtual float getCellSize();
   virtual void setLayerLayout(CHT::Layout layout);
 
-  virtual std::unique_ptr<CalorimeterHitImpl> encode(int delta_I, int delta_J);
+  virtual std::unique_ptr<calohitType> encode(int delta_I, int delta_J);
 
   SimDigitalGeomCellIdLCGEO(const SimDigitalGeomCellIdLCGEO& toCopy) = delete;
   void operator=(const SimDigitalGeomCellIdLCGEO& toCopy) = delete;
@@ -148,6 +146,7 @@ template <typename InputTraits>
 class SimDigitalGeomCellIdPROTO : public SimDigitalGeomCellId<InputTraits> {
 public:
   using simcalohitType = typename InputTraits::simcalohitType;
+  using calohitType = typename InputTraits::calohitType;
 
   SimDigitalGeomCellIdPROTO(LCCollection* inputCol, LCCollectionVec* outputCol);
   virtual ~SimDigitalGeomCellIdPROTO();
@@ -155,7 +154,7 @@ public:
   virtual float getCellSize() { return this->_cellSize; }
   virtual void setLayerLayout(CHT::Layout layout);
 
-  virtual std::unique_ptr<CalorimeterHitImpl> encode(int delta_I, int delta_J);
+  virtual std::unique_ptr<calohitType> encode(int delta_I, int delta_J);
 
   SimDigitalGeomCellIdPROTO(const SimDigitalGeomCellIdPROTO& toCopy) = delete;
   void operator=(const SimDigitalGeomCellIdPROTO& toCopy) = delete;

@@ -1,13 +1,8 @@
 #include "SimDigital.h"
 #include "InputTraits.h"
 
-//#include <EVENT/MCParticle.h> // useless here
 #include <marlin/Exceptions.h>
 #include <marlin/Global.h>
-
-
-#include <UTIL/CellIDDecoder.h>
-#include <UTIL/CellIDEncoder.h>
 
 #include <algorithm>
 #include <iostream>
