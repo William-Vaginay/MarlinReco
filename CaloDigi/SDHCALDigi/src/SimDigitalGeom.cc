@@ -1,5 +1,4 @@
 #include "SimDigitalGeom.h"
-
 #include "SimDigital.h"
 
 #include <AIDA/ITuple.h>

@@ -40,8 +40,7 @@ struct WGGMCParticle {
 };
 
 struct WGGRelation {
-  //WGGRelation(IMPL::LCRelationImpl &relation) : _relation(&relation) {}
-  WGGRelation() : _relation(nullptr) {}
+  WGGRelation(ILCInputTraits::calohitType* caloHit, ILCInputTraits::simcalohitType* simHit, float weight) : _relation(new ILCInputTraits::relationType(caloHit, simHit, weight)) {}
   IMPL::LCRelationImpl *_relation;
 };
 
@@ -51,11 +50,8 @@ struct WGGCellIDDecoder {
 };
 
 struct WGGCalorimeterHit {
-  //WGGCalorimeterHit(std::unique_ptr<IMPL::CalorimeterHitImpl> &calohit) : _calohit_unique_ptr(std::move(calohit)), _calohit(_calohit_unique_ptr.get()) {}
-  //WGGCalorimeterHit() : _calohit_unique_ptr(nullptr), _calohit(_calohit_unique_ptr.get()) {}
-  //std::unique_ptr<IMPL::CalorimeterHitImpl> _calohit_unique_ptr;
-  WGGCalorimeterHit(IMPL::CalorimeterHitImpl& calohit) : _calohit(&calohit) {}
-  IMPL::CalorimeterHitImpl *_calohit;
+  WGGCalorimeterHit(IMPL::CalorimeterHitImpl* calohit) : _calohit(calohit) {}
+  std::unique_ptr<IMPL::CalorimeterHitImpl> _calohit;
 };
 
 struct WGGCellIDEncoder {
@@ -90,7 +86,7 @@ namespace SimDigital_Data {
   // CollectionVec
   inline void setFlag(ILCInputTraits::collectionVecType* col, const int& flag) { col->setFlag(flag); }
   inline ILCInputTraits::parametersType& parameters(ILCInputTraits::collectionVecType* col) { return col->parameters(); }
-  inline void addElement(ILCInputTraits::collectionVecType* col, ILCInputTraits::objectType* obj) {col->addElement(obj); }
+  inline void  addElement(ILCInputTraits::collectionVecType* col, ILCInputTraits::objectType* obj) {col->addElement(obj); }
   // SimCalorimeterHit
   inline const float* getPosition(const ILCInputTraits::simcalohitType* hit) { return hit->getPosition(); }
   inline int getCellID0(const ILCInputTraits::simcalohitType* hit) { return hit->getCellID0(); }
@@ -134,7 +130,7 @@ namespace SimDigital_Data {
   // Collection
   // CollectionVec
   inline void addElement(WGGInputTraits::collectionVecType* col, WGGInputTraits::relationType* rel) {col->addElement(rel->_relation); }
-  inline void addElement(WGGInputTraits::collectionVecType* col, WGGInputTraits::calohitType* caloHit) {col->addElement(caloHit->_calohit); }
+  inline void addElement(WGGInputTraits::collectionVecType* col, WGGInputTraits::calohitType* caloHit) {col->addElement(caloHit->_calohit.get()); }
   // SimCalorimeterHit
   inline const float* getPosition(const WGGInputTraits::simcalohitType* hit) { return hit->_simhit->getPosition(); }
   inline int getCellID0(const WGGInputTraits::simcalohitType* hit) { return hit->_simhit->getCellID0(); }
@@ -159,13 +155,19 @@ namespace SimDigital_Data {
   inline void setTime(WGGInputTraits::calohitType* hit, float time) { hit->_calohit->setTime(time); }
   inline void setType(WGGInputTraits::calohitType* hit, int type) { hit->_calohit->setType(type); }
   inline void setPosition(WGGInputTraits::calohitType* hit, const float pos[3]) { hit->_calohit->setPosition(pos); }
-  inline void createCaloHit(std::unique_ptr<WGGInputTraits::calohitType> &ptr) { ILCInputTraits::calohitType* caloHit = new ILCInputTraits::calohitType(); ptr = std::make_unique<WGGInputTraits::calohitType>(*caloHit); }
+  inline void createCaloHit(std::unique_ptr<WGGInputTraits::calohitType> &ptr) { 
+    IMPL::CalorimeterHitImpl* caloHit = new IMPL::CalorimeterHitImpl(); 
+    WGGInputTraits::calohitType *whit = new WGGInputTraits::calohitType(caloHit); 
+    caloHit = nullptr;
+    std::unique_ptr<WGGInputTraits::calohitType> p(whit);
+    whit = nullptr;
+    ptr = std::move(p); }
   // CellIDEncoder
-  inline void setcellID(WGGInputTraits::cellidencoderType& encoder, WGGInputTraits::calohitType* hit) { encoder._encoder.setCellID(hit->_calohit); }
+  inline void setcellID(WGGInputTraits::cellidencoderType& encoder, WGGInputTraits::calohitType* hit) { encoder._encoder.setCellID(hit->_calohit.get()); }
   inline void setValue(WGGInputTraits::cellidencoderType& encoder, lcio::long64 value) { encoder._encoder.setValue(value); }
   inline void setField(WGGInputTraits::cellidencoderType& encoder, const std::string& fieldName, int value) { encoder._encoder[fieldName] = value; }
   // Relation
-  inline void createRelation(WGGInputTraits::relationType* &ptr, WGGInputTraits::calohitType* caloHit, WGGInputTraits::simcalohitType* simHit, float weight) { ptr->_relation = new ILCInputTraits::relationType(caloHit->_calohit, simHit->_simhit, weight); }
+  inline void createRelation(WGGInputTraits::relationType* &ptr, WGGInputTraits::calohitType* calorimeterHit, WGGInputTraits::simcalohitType* simHit, float weight) { ptr = new WGGInputTraits::relationType(calorimeterHit->_calohit.get(), simHit->_simhit, weight); }
 };
 
 #endif
