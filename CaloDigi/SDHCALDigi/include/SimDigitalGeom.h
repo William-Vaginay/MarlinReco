@@ -3,7 +3,6 @@
 
 #include <utility>
 
-#include <IMPL/LCCollectionVec.h>
 #include <marlin/Processor.h>
 
 #include "CalorimeterHitType.h" //in MarlinUtil
@@ -87,12 +86,14 @@ protected:
 template <typename InputTraits>
 class SimDigitalGeomCellId : public SimDigitalGeomCellId_Base {
 public:
+  using collectionType =    typename InputTraits::collectionType;
+  using collectionVecType = typename InputTraits::collectionVecType;
   using simcalohitType =    typename InputTraits::simcalohitType;
   using celliddecoderType = typename InputTraits::celliddecoderType;
   using calohitType =       typename InputTraits::calohitType;
   using cellidencoderType = typename InputTraits::cellidencoderType;
 
-  SimDigitalGeomCellId(LCCollection* inputCol, LCCollectionVec* outputCol);
+  SimDigitalGeomCellId(collectionType* inputCol, collectionVecType* outputCol);
   virtual ~SimDigitalGeomCellId();
 
   virtual void setLayerLayout(CHT::Layout layout) = 0;
@@ -120,10 +121,12 @@ protected:
 template <typename InputTraits>
 class SimDigitalGeomCellIdLCGEO : public SimDigitalGeomCellId<InputTraits> {
 public:
+  using collectionType = typename InputTraits::collectionType;
+  using collectionVecType = typename InputTraits::collectionVecType;
   using simcalohitType = typename InputTraits::simcalohitType;
   using calohitType = typename InputTraits::calohitType;
 
-  SimDigitalGeomCellIdLCGEO(LCCollection* inputCol, LCCollectionVec* outputCol);
+  SimDigitalGeomCellIdLCGEO(collectionType* inputCol, collectionVecType* outputCol);
   virtual ~SimDigitalGeomCellIdLCGEO();
 
   virtual float getCellSize();
@@ -145,10 +148,12 @@ protected:
 template <typename InputTraits>
 class SimDigitalGeomCellIdPROTO : public SimDigitalGeomCellId<InputTraits> {
 public:
+  using collectionType = typename InputTraits::collectionType;
+  using collectionVecType = typename InputTraits::collectionVecType;
   using simcalohitType = typename InputTraits::simcalohitType;
   using calohitType = typename InputTraits::calohitType;
 
-  SimDigitalGeomCellIdPROTO(LCCollection* inputCol, LCCollectionVec* outputCol);
+  SimDigitalGeomCellIdPROTO(collectionType* inputCol, collectionVecType* outputCol);
   virtual ~SimDigitalGeomCellIdPROTO();
 
   virtual float getCellSize() { return this->_cellSize; }

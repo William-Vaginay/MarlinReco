@@ -42,14 +42,14 @@ void SimDigitalGeomCellId_Base::linkSteps(std::vector<StepAndCharge>& vec) {
 }
 
 template <typename InputTraits>
-SimDigitalGeomCellId<InputTraits>::SimDigitalGeomCellId(LCCollection* inputCol, LCCollectionVec* outputCol)
-    : SimDigitalGeomCellId_Base(), _decoder(inputCol), _encoder(inputCol->getParameters().getStringVal(LCIO::CellIDEncoding), outputCol) {
-  outputCol->parameters().setValue(LCIO::CellIDEncoding, inputCol->getParameters().getStringVal(LCIO::CellIDEncoding));
-  _cellIDEncodingString = inputCol->getParameters().getStringVal(LCIO::CellIDEncoding);
+SimDigitalGeomCellId<InputTraits>::SimDigitalGeomCellId(collectionType* inputCol, collectionVecType* outputCol)
+    : SimDigitalGeomCellId_Base(), _decoder(inputCol), _encoder(SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), LCIO::CellIDEncoding), outputCol) {
+  SimDigital_Data::setValue(SimDigital_Data::parameters(outputCol), LCIO::CellIDEncoding, SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), LCIO::CellIDEncoding));
+  _cellIDEncodingString = SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), LCIO::CellIDEncoding);
 }
 
 template <typename InputTraits>
-SimDigitalGeomCellIdLCGEO<InputTraits>::SimDigitalGeomCellIdLCGEO(LCCollection* inputCol, LCCollectionVec* outputCol)
+SimDigitalGeomCellIdLCGEO<InputTraits>::SimDigitalGeomCellIdLCGEO(collectionType* inputCol, collectionVecType* outputCol)
     : SimDigitalGeomCellId<InputTraits>(inputCol, outputCol)
 //	  theDetector()
 {
@@ -57,7 +57,7 @@ SimDigitalGeomCellIdLCGEO<InputTraits>::SimDigitalGeomCellIdLCGEO(LCCollection* 
 }
 
 template <typename InputTraits>
-SimDigitalGeomCellIdPROTO<InputTraits>::SimDigitalGeomCellIdPROTO(LCCollection* inputCol, LCCollectionVec* outputCol)
+SimDigitalGeomCellIdPROTO<InputTraits>::SimDigitalGeomCellIdPROTO(collectionType* inputCol, collectionVecType* outputCol)
     : SimDigitalGeomCellId<InputTraits>(inputCol, outputCol)
 //	  theDetector()
 {

@@ -5,7 +5,6 @@
 
 #include <marlin/Processor.h>
 
-#include <EVENT/SimCalorimeterHit.h>
 #include <AIDA/ITuple.h>
 
 template <typename InputTraits>
@@ -17,7 +16,7 @@ class DebugGeomStep {
 public:
   using simcalohitType =    typename InputTraits::simcalohitType;
 
-  static void fill(SimDigitalGeomCellId<InputTraits>* geomCellId, simcalohitType* hit, const std::vector<StepAndCharge>& stepsInIJZcoord);
+  static void fill(SimDigitalGeomCellId<InputTraits>* geomCellId, simcalohitType* simhit, const std::vector<StepAndCharge>& stepsInIJZcoord);
   static void bookTuples(const marlin::Processor* proc);
 
 private:

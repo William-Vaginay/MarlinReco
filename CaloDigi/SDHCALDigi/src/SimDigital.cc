@@ -267,7 +267,7 @@ SimDigitalProcessor<InputTraits>::cellIDHitMap SimDigitalProcessor<InputTraits>:
   int numElements = SimDigital_Data::getNumberOfElements(col);
 
   for (int j = 0; j < numElements; ++j) {
-    simcalohitType* hit = (SimDigital_Data::getElementAt(col, j, static_cast<InputTraits*>(nullptr)));
+    simcalohitType* hit = (SimDigital_Data::getElementAt(col, j));
 
     std::vector<StepAndCharge> steps;
 
@@ -412,8 +412,8 @@ void SimDigitalProcessor<InputTraits>::applyThresholds(cellIDHitMap& myHitMap) {
 template <typename InputTraits> 
 void SimDigitalProcessor<InputTraits>::processCollection(collectionType* inputCol, collectionVecType*& outputCol, collectionVecType*& outputRelCol,
                                    CHT::Layout layout) {
-  outputCol = new collectionVecType(LCIO::CALORIMETERHIT);
-  outputRelCol = new collectionVecType(LCIO::LCRELATION);
+  SimDigital_Data::createcollectionVec(outputCol, LCIO::CALORIMETERHIT);
+  SimDigital_Data::createcollectionVec(outputRelCol, LCIO::LCRELATION);
 
   SimDigital_Data::setFlag(outputCol, SimDigital_Data::getFlag(flag));
 
@@ -443,7 +443,7 @@ void SimDigitalProcessor<InputTraits>::processCollection(collectionType* inputCo
     hitMemory& currentHitMem = it->second;
     if (currentHitMem.rawHit != -1) {
       streamlog_out(DEBUG) << " rawHit= " << currentHitMem.rawHit << std::endl;
-      simcalohitType* hitraw = SimDigital_Data::getElementAt(inputCol, currentHitMem.rawHit, static_cast<InputTraits*>(nullptr));
+      simcalohitType* hitraw = SimDigital_Data::getElementAt(inputCol, currentHitMem.rawHit);
       SimDigital_Data::setRawHit(currentHitMem.ahit.get(), hitraw);
     }
 
@@ -451,7 +451,7 @@ void SimDigitalProcessor<InputTraits>::processCollection(collectionType* inputCo
     SimDigital_Data::addElement(outputCol, caloHit);
 
     // put only one relation with the SimCalorimeterHit which contributes most
-    simcalohitType* hit = SimDigital_Data::getElementAt(inputCol, currentHitMem.rawHit, static_cast<InputTraits*>(nullptr));
+    simcalohitType* hit = SimDigital_Data::getElementAt(inputCol, currentHitMem.rawHit);
     relationType* rel = nullptr;
     SimDigital_Data::createRelation(rel, caloHit, hit, 1.0);
     SimDigital_Data::addElement(outputRelCol, rel);
@@ -484,7 +484,7 @@ void SimDigitalProcessor<InputTraits>::processEvent(eventType* evt) {
       std::string outputColName = _outputCollections.at(i);
       std::string outputRelColName = _outputRelCollections.at(i);
 
-      collectionType* inputCol = SimDigital_Data::getCollection(evt, inputColName);
+      collectionType* inputCol = SimDigital_Data::getCollection(evt, inputColName, static_cast<InputTraits*>(nullptr));
 
       _counters["NSim"] += SimDigital_Data::getNumberOfElements(inputCol);
       CHT::Layout layout = layoutFromString(inputColName);

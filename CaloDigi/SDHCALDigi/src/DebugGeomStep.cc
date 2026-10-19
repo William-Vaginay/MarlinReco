@@ -9,15 +9,15 @@ template <typename InputTraits>
 AIDA::ITuple* DebugGeomStep<InputTraits>::_tupleStep = NULL;
 
 template <typename InputTraits>
-void DebugGeomStep<InputTraits>::fill(SimDigitalGeomCellId<InputTraits>* geomCellId, simcalohitType* hit, const std::vector<StepAndCharge>& stepsInIJZcoord) {
+void DebugGeomStep<InputTraits>::fill(SimDigitalGeomCellId<InputTraits>* geomCellId, simcalohitType* simhit, const std::vector<StepAndCharge>& stepsInIJZcoord) {
   if (_tupleStep != nullptr) {
-    int nsteps = SimDigital_Data::getNMCContributions(hit);
+    int nsteps = SimDigital_Data::getNMCContributions(simhit);
     float notset = -88888;
     for (int imcp = 0; imcp < nsteps; imcp++) {
       _tupleStep->fill(TS_CHTLAYOUT, int(geomCellId->getCaloLayout()));
-      _tupleStep->fill(TS_HITCELLID, SimDigital_Data::getCellID0(hit));
-      _tupleStep->fill(TS_NSTEP, SimDigital_Data::getNMCContributions(hit));
-      const float* steppos = SimDigital_Data::getStepPosition(hit, imcp);
+      _tupleStep->fill(TS_HITCELLID, SimDigital_Data::getCellID0(simhit));
+      _tupleStep->fill(TS_NSTEP, SimDigital_Data::getNMCContributions(simhit));
+      const float* steppos = SimDigital_Data::getStepPosition(simhit, imcp);
       for (int i = 0; i < 3; i++) {
         if (geomCellId->hitPosition() != NULL)
            _tupleStep->fill(TS_HITX + i, geomCellId->hitPosition()[i]);
@@ -35,7 +35,7 @@ void DebugGeomStep<InputTraits>::fill(SimDigitalGeomCellId<InputTraits>* geomCel
           _tupleStep->fill(TS_DELTAI + i, notset);
       }
       if (imcp < (int)stepsInIJZcoord.size())
-        _tupleStep->fill(TS_TIME, SimDigital_Data::getTimeCont(hit, imcp));
+        _tupleStep->fill(TS_TIME, SimDigital_Data::getTimeCont(simhit, imcp));
       else
         _tupleStep->fill(TS_TIME, notset);
 

@@ -11,6 +11,7 @@
 ChargeInducer::ChargeInducer() : generator() {}
 
 ChargeInducer::~ChargeInducer() {}
+
 void ChargeInducer::setSeed(unsigned int value) { generator.seed(value); }
 
 UniformPolya::UniformPolya(float _qbar, float _theta)
