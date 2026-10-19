@@ -200,9 +200,9 @@ void SimDigitalProcessor<InputTraits>::init() {
       AIDAProcessor::histogramFactory(this)->createHistogram1D("CellCharge", "CellCharge", 10000, 0, 100);
 
   // flags
-  flag.setBit(LCIO::CHBIT_LONG);
-  flag.setBit(LCIO::RCHBIT_TIME);
-  flagRel.setBit(LCIO::LCREL_WEIGHTED);
+  SimDigital_Data::setBit(flag, LCIO::CHBIT_LONG);
+  SimDigital_Data::setBit(flag, LCIO::RCHBIT_TIME);
+  SimDigital_Data::setBit(flagRel, LCIO::LCREL_WEIGHTED);
 }
 
 template <typename InputTraits> 
@@ -484,7 +484,7 @@ void SimDigitalProcessor<InputTraits>::processEvent(eventType* evt) {
       std::string outputColName = _outputCollections.at(i);
       std::string outputRelColName = _outputRelCollections.at(i);
 
-      collectionType* inputCol = SimDigital_Data::getCollection(evt, inputColName, static_cast<InputTraits*>(nullptr));
+      collectionType* inputCol = SimDigital_Data::getCollection(evt, inputColName);
 
       _counters["NSim"] += SimDigital_Data::getNumberOfElements(inputCol);
       CHT::Layout layout = layoutFromString(inputColName);

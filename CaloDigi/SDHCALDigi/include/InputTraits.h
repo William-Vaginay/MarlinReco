@@ -29,6 +29,11 @@ struct ILCInputTraits {
   using relationType = IMPL::LCRelationImpl;
 };
 
+struct WGGEvent {
+  WGGEvent() : _evt(nullptr) {}
+  EVENT::LCEvent *_evt;
+};
+
 struct WGGParameters {
   WGGParameters(EVENT::LCParameters &params) : _params(&params) {}
   EVENT::LCParameters *_params;
@@ -76,8 +81,13 @@ struct WGGCellIDEncoder {
   UTIL::CellIDEncoder<IMPL::CalorimeterHitImpl> _encoder;
 };
 
+struct WGGFlag {
+  WGGFlag() : _flag() {}
+  IMPL::LCFlagImpl _flag;
+};
+
 struct WGGInputTraits {
-  using eventType = EVENT::LCEvent;
+  using eventType = WGGEvent;
   using collectionType = WGGCollection;
   using collectionVecType = WGGCollectionVec;
   using simcalohitType = WGGSimCalorimeterHit;
@@ -85,7 +95,7 @@ struct WGGInputTraits {
   using celliddecoderType = WGGCellIDDecoder;
   using calohitType = WGGCalorimeterHit;
   using cellidencoderType = WGGCellIDEncoder;
-  using flagType = IMPL::LCFlagImpl;
+  using flagType = WGGFlag;
   using parametersType = WGGParameters;
   using relationType = WGGRelation;
 };
@@ -95,7 +105,7 @@ namespace SimDigital_Data {
   //// ILCInputTraits ////
 
   // Event
-  inline ILCInputTraits::collectionType* getCollection(const ILCInputTraits::eventType* evt, const std::string& name, ILCInputTraits*) { return evt->getCollection(name.c_str()); }
+  inline ILCInputTraits::collectionType* getCollection(const ILCInputTraits::eventType* evt, const std::string& name) { return evt->getCollection(name.c_str()); }
   inline void addCollection(ILCInputTraits::eventType* evt, ILCInputTraits::collectionVecType* colVec, const std::string& name) { evt->addCollection(colVec, name.c_str()); }
   // Collection
   inline int getNumberOfElements(const ILCInputTraits::collectionType* col) { return col->getNumberOfElements(); }
@@ -137,6 +147,7 @@ namespace SimDigital_Data {
   inline void setValue(ILCInputTraits::cellidencoderType& encoder, lcio::long64 value) { encoder.setValue(value); }
   inline void setField(ILCInputTraits::cellidencoderType& encoder, const std::string& fieldName, int value) { encoder[fieldName] = value; }
   // Flag
+  inline void setBit(ILCInputTraits::flagType& flag, int bit) { flag.setBit(bit); }
   inline int getFlag(const ILCInputTraits::flagType& flag) { return flag.getFlag(); }
   // Parameters
   inline void setValue(ILCInputTraits::parametersType& params, const std::string& key, const std::string& value) { params.setValue(key, value); }
@@ -147,8 +158,8 @@ namespace SimDigital_Data {
   //// WGGInputTraits ////
 
   // Event
-  inline WGGInputTraits::collectionType* getCollection(const WGGInputTraits::eventType* evt, const std::string& name, WGGInputTraits*) { return new WGGInputTraits::collectionType(*(evt->getCollection(name.c_str()))); }
-  inline void addCollection(ILCInputTraits::eventType* evt, WGGInputTraits::collectionVecType* colVec, const std::string& name) { evt->addCollection(colVec->_colVec, name.c_str()); }
+  inline WGGInputTraits::collectionType* getCollection(const WGGInputTraits::eventType* evt, const std::string& name) { return new WGGInputTraits::collectionType(*(evt->_evt->getCollection(name.c_str()))); }
+  inline void addCollection(WGGInputTraits::eventType* evt, WGGInputTraits::collectionVecType* colVec, const std::string& name) { evt->_evt->addCollection(colVec->_colVec, name.c_str()); }
   // Collection
   inline int getNumberOfElements(const WGGInputTraits::collectionType* col) { return col->_col->getNumberOfElements(); }
   inline WGGInputTraits::simcalohitType* getElementAt(const WGGInputTraits::collectionType* col, int index) { return new WGGInputTraits::simcalohitType(*dynamic_cast<EVENT::SimCalorimeterHit*>(col->_col->getElementAt(index))); }
@@ -196,6 +207,8 @@ namespace SimDigital_Data {
   inline void setValue(WGGInputTraits::cellidencoderType& encoder, lcio::long64 value) { encoder._encoder.setValue(value); }
   inline void setField(WGGInputTraits::cellidencoderType& encoder, const std::string& fieldName, int value) { encoder._encoder[fieldName] = value; }
   // Flag
+  inline void setBit(WGGInputTraits::flagType& flag, int bit) { flag._flag.setBit(bit); }
+  inline int getFlag(const WGGInputTraits::flagType& flag) { return flag._flag.getFlag(); }
   // Parameters
   inline void setValue(WGGInputTraits::parametersType& parameters, const std::string& key, const std::string& value) { parameters._params->setValue(key, value); }
   inline const std::string& getStringVal(const WGGInputTraits::parametersType& parameters, const std::string& key) { return parameters._params->getStringVal(key); }
