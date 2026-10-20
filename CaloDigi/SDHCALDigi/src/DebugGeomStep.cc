@@ -1,8 +1,12 @@
 #include "DebugGeomStep.h"
 #include "SimDigitalGeom.h"
 #include "SimDigital.h"
+#include "ILCInputTraits.h"
+#include "WGGInputTraits.h"
 
+#include <marlin/Processor.h>
 #include <marlin/AIDAProcessor.h>
+#include <AIDA/ITuple.h>
 #include <AIDA/ITupleFactory.h>
 
 template <typename InputTraits>

@@ -1,11 +1,12 @@
 #ifndef DebugGeomHit_h
 #define DebugGeomHit_h
 
-#include <marlin/Processor.h>
-#include "marlinutil/LCGeometryTypes.h"
-
-#include <AIDA/ITuple.h>
-
+namespace marlin {
+  class Processor;
+}
+namespace AIDA {
+  class ITuple;
+}
 class SimDigitalGeomCellId_Base;
 
 class DebugGeomHit {

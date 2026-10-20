@@ -1,7 +1,9 @@
 #include "DebugGeomHit.h"
 #include "SimDigitalGeom.h"
 
+#include <marlin/Processor.h>
 #include <marlin/AIDAProcessor.h>
+#include <AIDA/ITuple.h>
 #include <AIDA/ITupleFactory.h>
 
 AIDA::ITuple* DebugGeomHit::_tupleHit = NULL;

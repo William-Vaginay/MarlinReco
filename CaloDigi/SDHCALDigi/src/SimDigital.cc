@@ -1,5 +1,6 @@
 #include "SimDigital.h"
-#include "InputTraits.h"
+#include "ILCInputTraits.h"
+#include "WGGInputTraits.h"
 
 #include <marlin/Exceptions.h>
 #include <marlin/Global.h>

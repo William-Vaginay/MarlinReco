@@ -161,7 +161,7 @@ private:
   bool _linkSteps = false;
   bool _doThresholds = true;
 
-  // efficiency manager
+  // efficiency
   std::string efficiencyOption = "Uniform";
   std::string effMapFile = "";
   EfficiencyManager* efficiency = nullptr;

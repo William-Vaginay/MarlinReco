@@ -6,7 +6,7 @@
 #include <marlin/Processor.h>
 
 #include "CalorimeterHitType.h" //in MarlinUtil
-#include "marlinutil/LCGeometryTypes.h"
+#include "CLHEP/Vector/ThreeVector.h"
 
 #include "DD4hep/DD4hepUnits.h"
 #include "DD4hep/DetType.h"
@@ -51,9 +51,9 @@ public:
   int module() const { return _module; }
   int tower() const { return _tower; }
 
-  const LCVector3D& normalToRPCPlane() const { return _normal; }
-  const LCVector3D& Iaxis() const { return _Iaxis; }
-  const LCVector3D& Jaxis() const { return _Jaxis; }
+  const CLHEP::Hep3Vector& normalToRPCPlane() const { return _normal; }
+  const CLHEP::Hep3Vector& Iaxis() const { return _Iaxis; }
+  const CLHEP::Hep3Vector& Jaxis() const { return _Jaxis; }
 
   const float* hitPosition() const { return _hitPosition; }
 
@@ -74,9 +74,9 @@ protected:
   int _Iy = -999;
   int _Jz = -999;
 
-  LCVector3D _normal;
-  LCVector3D _Iaxis;
-  LCVector3D _Jaxis;
+  CLHEP::Hep3Vector _normal;
+  CLHEP::Hep3Vector _Iaxis;
+  CLHEP::Hep3Vector _Jaxis;
 
   const float* _hitPosition = nullptr;
 

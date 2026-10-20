@@ -1,12 +1,14 @@
 #ifndef DebugGeomStep_h
 #define DebugGeomStep_h
 
-#include "InputTraits.h"
+#include <vector>
 
-#include <marlin/Processor.h>
-
-#include <AIDA/ITuple.h>
-
+namespace marlin {
+  class Processor;
+}
+namespace AIDA {
+  class ITuple;
+}
 template <typename InputTraits>
 class SimDigitalGeomCellId;
 struct StepAndCharge;

@@ -1,9 +1,8 @@
 #include "SimDigitalGeom.h"
 #include "SimDigital.h"
+#include "ILCInputTraits.h"
+#include "WGGInputTraits.h"
 
-#include <AIDA/ITuple.h>
-#include <AIDA/ITupleFactory.h>
-#include <marlin/AIDAProcessor.h>
 #include <marlin/Global.h>
 
 #include <DD4hep/DetectorSelector.h>
@@ -12,7 +11,6 @@
 
 #include <limits>
 
-using namespace lcio;
 using namespace marlin;
 
 SimDigitalGeomCellId_Base::SimDigitalGeomCellId_Base() : _normal(), _Iaxis(), _Jaxis() {}
@@ -25,7 +23,7 @@ void SimDigitalGeomCellId_Base::linkSteps(std::vector<StepAndCharge>& vec) {
 
   float time = std::numeric_limits<float>::max();
   float totalLength = 0;
-  LCVector3D pos(0, 0, 0);
+  CLHEP::Hep3Vector pos(0, 0, 0);
 
   for (const auto& step : vec) {
     totalLength += step.stepLength;
@@ -86,7 +84,7 @@ SimDigitalGeomCellIdPROTO<InputTraits>::~SimDigitalGeomCellIdPROTO() {}
 
 template <typename InputTraits>
 void SimDigitalGeomCellId<InputTraits>::createStepAndChargeVec(simcalohitType* hit, std::vector<StepAndCharge>& vec, bool link) {
-  LCVector3D hitPos;
+  CLHEP::Hep3Vector hitPos;
   if (NULL != _hitPosition)
     hitPos.set(_hitPosition[0], _hitPosition[1], _hitPosition[2]);
 
@@ -100,12 +98,12 @@ void SimDigitalGeomCellId<InputTraits>::createStepAndChargeVec(simcalohitType* h
   unsigned int currentNum = 0;
 
   for (int imcp = 0; imcp < SimDigital_Data::getNMCContributions(hit); imcp++) {
-    LCVector3D stepPos;
+    CLHEP::Hep3Vector stepPos;
     const float* pos = SimDigital_Data::getStepPosition(hit, imcp);
     if (NULL != pos) {
       stepPos.set(pos[0], pos[1], pos[2]);
       stepPos -= hitPos;
-      stepPos = LCVector3D(stepPos * _Iaxis, stepPos * _Jaxis, stepPos * _normal);
+      stepPos = CLHEP::Hep3Vector(stepPos * _Iaxis, stepPos * _Jaxis, stepPos * _normal);
 
       PotentialSameTrackID stepID(SimDigital_Data::getPDGCont(hit, imcp), SimDigital_Data::getPDG(SimDigital_Data::getParticleCont(hit, imcp)));
 
