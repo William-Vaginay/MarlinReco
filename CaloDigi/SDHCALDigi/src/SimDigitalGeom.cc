@@ -43,10 +43,11 @@ void SimDigitalGeomCellId_Base::linkSteps(std::vector<StepAndCharge>& vec) {
 
 template <typename InputTraits>
 SimDigitalGeomCellId<InputTraits>::SimDigitalGeomCellId(collectionType* inputCol, collectionVecType* outputCol)
-    : SimDigitalGeomCellId_Base(), _decoder(inputCol), _encoder(SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), LCIO::CellIDEncoding), outputCol) {
-  SimDigital_Data::setValue(SimDigital_Data::parameters(outputCol), LCIO::CellIDEncoding, SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), LCIO::CellIDEncoding));
-  _cellIDEncodingString = SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), LCIO::CellIDEncoding);
-}
+    : SimDigitalGeomCellId_Base(), _decoder(inputCol), _encoder(SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), LCIO::CellIDEncoding), outputCol), _encodingString() 
+  {
+    SimDigital_Data::setValue(SimDigital_Data::parameters(outputCol), LCIO::CellIDEncoding, SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), LCIO::CellIDEncoding));
+    _cellIDEncodingString = SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), LCIO::CellIDEncoding);
+  }
 
 template <typename InputTraits>
 SimDigitalGeomCellIdLCGEO<InputTraits>::SimDigitalGeomCellIdLCGEO(collectionType* inputCol, collectionVecType* outputCol)
@@ -54,6 +55,8 @@ SimDigitalGeomCellIdLCGEO<InputTraits>::SimDigitalGeomCellIdLCGEO(collectionType
 //	  theDetector()
 {
   streamlog_out(DEBUG) << "we will use lcgeo!" << std::endl;
+
+  setEncodingString();
 }
 
 template <typename InputTraits>
@@ -62,6 +65,8 @@ SimDigitalGeomCellIdPROTO<InputTraits>::SimDigitalGeomCellIdPROTO(collectionType
 //	  theDetector()
 {
   streamlog_out(DEBUG) << "we will use proto!" << std::endl;
+
+  setEncodingString();
 
   this->_normal.set(0, 0, 1);
   this->_Iaxis.set(1, 0, 0);
@@ -146,20 +151,19 @@ void SimDigitalGeomCellIdLCGEO<InputTraits>::processGeometry(simcalohitType* hit
   this->_trueLayer = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(0)) - 1;
   this->_stave = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(1)); // +1
   this->_module = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(2));
-
-  if (_encodingString.at(3).size() != 0)
+  if (this->_encodingString.at(3).size() != 0)
     this->_tower = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(3));
 
   this->_Iy = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(4));
   try {
     this->_Jz = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(5));
   } catch (lcio::Exception&) {
-    _encodingString.at(5) = "z";
+    this->_encodingString.at(5) = "z";
 
     try {
       this->_Jz = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(5));
     } catch (lcio::Exception&) {
-      _encodingString.at(5) = "y";
+      this->_encodingString.at(5) = "y";
       this->_Jz = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(5));
     }
   }
@@ -207,8 +211,8 @@ void SimDigitalGeomCellIdLCGEO<InputTraits>::processGeometry(simcalohitType* hit
   dd4hep::Position pos_i_plus_1;
   dd4hep::Position dir_i;
 
-  std::string xEncoding = _encodingString.at(4);
-  std::string yEncoding = _encodingString.at(5);
+  std::string xEncoding = this->_encodingString.at(4);
+  std::string yEncoding = this->_encodingString.at(5);
 
   idDecoder[xEncoding] = idDecoder[xEncoding] + 1;
   pos_i_plus_1 = idposConv.position(idDecoder.getValue());
@@ -280,39 +284,13 @@ std::vector<StepAndCharge> SimDigitalGeomCellId<InputTraits>::decode(simcalohitT
 }
 
 template <typename InputTraits>
-std::unique_ptr<typename InputTraits::calohitType> SimDigitalGeomCellIdLCGEO<InputTraits>::encode(int delta_I, int delta_J) {
+std::unique_ptr<typename InputTraits::calohitType> SimDigitalGeomCellId<InputTraits>::encode(int delta_I, int delta_J) {
   SimDigital_Data::setValue(this->_encoder, this->_cellIDvalue);
 
   int RealIy = this->_Iy + delta_I;
   int RealJz = this->_Jz + delta_J;
 
-  SimDigital_Data::setField(this->_encoder, this->_encodingString.at(4), RealIy);
-  SimDigital_Data::setField(this->_encoder, this->_encodingString.at(5), RealJz);
-
-  //std::unique_ptr<calohitType> hit(new calohitType);
-  std::unique_ptr<calohitType> hit = nullptr;
-  SimDigital_Data::createCaloHit(hit);
-  SimDigital_Data::setcellID(this->_encoder, hit.get());
-
-  SimDigital_Data::setType(hit.get(), CHT(CHT::had, CHT::hcal, this->_currentHCALCollectionCaloLayout, this->_trueLayer));
-
-  float posB[3];
-  posB[0] = static_cast<float>(this->_hitPosition[0] + getCellSize() * (delta_I * this->_Iaxis.x() + delta_J * this->_Jaxis.x()));
-  posB[1] = static_cast<float>(this->_hitPosition[1] + getCellSize() * (delta_I * this->_Iaxis.y() + delta_J * this->_Jaxis.y()));
-  posB[2] = static_cast<float>(this->_hitPosition[2] + getCellSize() * (delta_I * this->_Iaxis.z() + delta_J * this->_Jaxis.z()));
-  SimDigital_Data::setPosition(hit.get(), posB);
-
-  return hit;
-}
-
-template <typename InputTraits>
-std::unique_ptr<typename InputTraits::calohitType> SimDigitalGeomCellIdPROTO<InputTraits>::encode(int delta_I, int delta_J) {
-  SimDigital_Data::setValue(this->_encoder, this->_cellIDvalue);
-
-  int RealIy = this->_Iy + delta_I;
-  int RealJz = this->_Jz + delta_J;
-
-  if (RealIy < 0 || RealJz < 0)
+  if (isOffLimits(RealIy,RealJz ))
     return std::unique_ptr<calohitType>(nullptr);
 
   SimDigital_Data::setField(this->_encoder, this->_encodingString.at(4), RealIy);

@@ -97,25 +97,23 @@ public:
   virtual ~SimDigitalGeomCellId();
 
   virtual void setLayerLayout(CHT::Layout layout) = 0;
-
   std::vector<StepAndCharge> decode(simcalohitType* hit, bool link);
-
-protected:
-  virtual void processGeometry(simcalohitType* hit) = 0;
-  void createStepAndChargeVec(simcalohitType* hit, std::vector<StepAndCharge>& vec, bool link);
-
-public:
-  virtual std::unique_ptr<calohitType> encode(int delta_I, int delta_J) = 0;
+  std::unique_ptr<calohitType> encode(int delta_I, int delta_J);
 
   SimDigitalGeomCellId(const SimDigitalGeomCellId& toCopy) = delete;
   void operator=(const SimDigitalGeomCellId& toCopy) = delete;
 
 protected:
+  virtual void setEncodingString() = 0;  
+  virtual void processGeometry(simcalohitType* hit) = 0;
+  void createStepAndChargeVec(simcalohitType* hit, std::vector<StepAndCharge>& vec, bool link);
+  virtual bool isOffLimits(int Real_Iy, int Real_Jz) = 0;
+
   dd4hep::CellID _cellIDvalue = 0;
   celliddecoderType _decoder;
   cellidencoderType _encoder;
-
   std::string _cellIDEncodingString = "";
+  std::vector<std::string> _encodingString;
 };
 
 template <typename InputTraits>
@@ -132,15 +130,13 @@ public:
   virtual float getCellSize();
   virtual void setLayerLayout(CHT::Layout layout);
 
-  virtual std::unique_ptr<calohitType> encode(int delta_I, int delta_J);
-
   SimDigitalGeomCellIdLCGEO(const SimDigitalGeomCellIdLCGEO& toCopy) = delete;
   void operator=(const SimDigitalGeomCellIdLCGEO& toCopy) = delete;
 
 protected:
+  virtual void setEncodingString() {this->_encodingString = {"layer", "stave", "module", "tower", "x", "y"};}
   virtual void processGeometry(simcalohitType* hit);
-
-  std::vector<std::string> _encodingString = {"layer", "stave", "module", "tower", "x", "y"};
+  virtual bool isOffLimits(int /*Real_Iy*/, int /*Real_Jz*/)  { return false; }
 
   dd4hep::rec::LayeredCalorimeterData* _caloData = nullptr;
 };
@@ -159,15 +155,13 @@ public:
   virtual float getCellSize() { return this->_cellSize; }
   virtual void setLayerLayout(CHT::Layout layout);
 
-  virtual std::unique_ptr<calohitType> encode(int delta_I, int delta_J);
-
   SimDigitalGeomCellIdPROTO(const SimDigitalGeomCellIdPROTO& toCopy) = delete;
   void operator=(const SimDigitalGeomCellIdPROTO& toCopy) = delete;
 
 protected:
+  virtual void setEncodingString() {this->_encodingString = {"K-1", "", "", "", "I", "J"};}
   virtual void processGeometry(simcalohitType* hit);
-
-  std::vector<std::string> _encodingString = {"K-1", "", "", "", "I", "J"};
+  virtual bool isOffLimits(int Real_Iy, int Real_Jz)  { return Real_Iy < 0 || Real_Jz < 0; }
 };
 
 #endif // SimDigitalGeom_h

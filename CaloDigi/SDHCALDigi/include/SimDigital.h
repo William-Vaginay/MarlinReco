@@ -117,17 +117,14 @@ private:
 
   typedef std::map<dd4hep::CellID, hitMemory> cellIDHitMap;
 
-  void processCollection(collectionType* inputCol, collectionVecType*& outputCol, collectionVecType*& outputRelCol,
-                         CHT::Layout layout);
+  void processCollection(collectionType* inputCol, collectionVecType*& outputCol, collectionVecType*& outputRelCol, CHT::Layout layout);
   cellIDHitMap createPotentialOutputHits(collectionType* col, SimDigitalGeomCellId<InputTraits>* aGeomCellId);
-
   void removeAdjacentStep(std::vector<StepAndCharge>& vec);
   void fillTupleStep(const std::vector<StepAndCharge>& vec, int level);
   void removeHitsBelowThreshold(cellIDHitMap& myHitMap, float threshold);
   void applyThresholds(cellIDHitMap& myHitMap);
 
   std::vector<std::string> _inputCollections{};
-
   std::vector<std::string> _outputCollections{};
   std::vector<std::string> _outputRelCollections{};
 
@@ -136,7 +133,6 @@ private:
 
   std::map<std::string, int> _counters{};
   std::vector<float> _thresholdHcal{};
-
   std::vector<double> _hitCharge = {};
 
   //std::map<dd4hep::CellID, std::vector<LCGenericObject*>> geneMap = {};  // useless
@@ -149,14 +145,14 @@ private:
   std::string spreaderMapFile = "";
   ChargeSpreaderParameters chargeSpreaderParameters;
   ChargeSpreader* chargeSpreader = nullptr;
-
   std::string polyaOption = "Uniform";
   std::string polyaMapFile = "";
   float polyaQbar = 0.0f;
   float polyaTheta = 0.0f;
+
+  // charge inducer
   ChargeInducer* chargeInducer = nullptr;
   int _polyaRandomSeed = 1;
-
   float _angleCorrPow = 0.4f;
 
   double timeCut = std::numeric_limits<double>::max();
@@ -165,6 +161,7 @@ private:
   bool _linkSteps = false;
   bool _doThresholds = true;
 
+  // efficiency manager
   std::string efficiencyOption = "Uniform";
   std::string effMapFile = "";
   EfficiencyManager* efficiency = nullptr;
