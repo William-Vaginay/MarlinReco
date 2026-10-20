@@ -43,10 +43,10 @@ void SimDigitalGeomCellId_Base::linkSteps(std::vector<StepAndCharge>& vec) {
 
 template <typename InputTraits>
 SimDigitalGeomCellId<InputTraits>::SimDigitalGeomCellId(collectionType* inputCol, collectionVecType* outputCol)
-    : SimDigitalGeomCellId_Base(), _decoder(inputCol), _encoder(SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), LCIO::CellIDEncoding), outputCol), _encodingString() 
+    : SimDigitalGeomCellId_Base(), _decoder(inputCol), _encoder(SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), SimDigital_Data::getHiCellIDEncodingString()), outputCol), _encodingString() 
   {
-    SimDigital_Data::setValue(SimDigital_Data::parameters(outputCol), LCIO::CellIDEncoding, SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), LCIO::CellIDEncoding));
-    _cellIDEncodingString = SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), LCIO::CellIDEncoding);
+    SimDigital_Data::setValue(SimDigital_Data::parameters(outputCol), SimDigital_Data::getHiCellIDEncodingString(), SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), SimDigital_Data::getHiCellIDEncodingString()));
+    _cellIDEncodingString = SimDigital_Data::getStringVal(SimDigital_Data::getParameters(inputCol), SimDigital_Data::getHiCellIDEncodingString());
   }
 
 template <typename InputTraits>
@@ -157,12 +157,12 @@ void SimDigitalGeomCellIdLCGEO<InputTraits>::processGeometry(simcalohitType* hit
   this->_Iy = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(4));
   try {
     this->_Jz = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(5));
-  } catch (lcio::Exception&) {
+  } catch (typename InputTraits::exceptionType&) {
     this->_encodingString.at(5) = "z";
 
     try {
       this->_Jz = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(5));
-    } catch (lcio::Exception&) {
+    } catch (typename InputTraits::exceptionType&) {
       this->_encodingString.at(5) = "y";
       this->_Jz = SimDigital_Data::getField(this->_decoder, hit, this->_encodingString.at(5));
     }

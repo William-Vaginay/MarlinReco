@@ -13,6 +13,7 @@
 #include <IMPL/LCFlagImpl.h>
 #include <EVENT/LCGenericObject.h>
 #include <IMPL/LCRelationImpl.h>
+#include "lcio.h"
 
 struct ILCInputTraits {
   using eventType = EVENT::LCEvent;
@@ -27,6 +28,8 @@ struct ILCInputTraits {
   using flagType = IMPL::LCFlagImpl;
   using objectType = EVENT::LCObject;
   using relationType = IMPL::LCRelationImpl;
+  using long64Type = lcio::long64;
+  using exceptionType = lcio::Exception;
 };
 
 struct WGGEvent {
@@ -98,6 +101,8 @@ struct WGGInputTraits {
   using flagType = WGGFlag;
   using parametersType = WGGParameters;
   using relationType = WGGRelation;
+  using long64Type = lcio::long64;
+  using exceptionType = lcio::Exception;
 };
 
 namespace SimDigital_Data {
@@ -130,7 +135,7 @@ namespace SimDigital_Data {
   // MCParticle
   inline int getPDG(const ILCInputTraits::mcparticleType* particle) {return particle->getPDG(); }
   // CellIDDecoder
-  inline lcio::long64 getValue(ILCInputTraits::celliddecoderType& decoder, ILCInputTraits::simcalohitType* simhit) { return decoder(simhit).getValue(); }
+  inline ILCInputTraits::long64Type getValue(ILCInputTraits::celliddecoderType& decoder, ILCInputTraits::simcalohitType* simhit) { return decoder(simhit).getValue(); }
   inline int getField(ILCInputTraits::celliddecoderType& decoder, ILCInputTraits::simcalohitType* simhit, const std::string& fieldName) { return decoder(simhit)[fieldName]; }
   // CalorimeterHit
   inline void setRawHit(ILCInputTraits::calohitType* calohit, ILCInputTraits::simcalohitType* rawHit) { calohit->setRawHit(rawHit); }
@@ -144,7 +149,7 @@ namespace SimDigital_Data {
   inline void createCaloHit(std::unique_ptr<ILCInputTraits::calohitType> &ptr) { ptr = std::make_unique<ILCInputTraits::calohitType>(); }
   // CellIDEncoder
   inline void setcellID(ILCInputTraits::cellidencoderType& encoder, ILCInputTraits::calohitType* calohit) { encoder.setCellID(calohit); }
-  inline void setValue(ILCInputTraits::cellidencoderType& encoder, lcio::long64 value) { encoder.setValue(value); }
+  inline void setValue(ILCInputTraits::cellidencoderType& encoder, ILCInputTraits::long64Type value) { encoder.setValue(value); }
   inline void setField(ILCInputTraits::cellidencoderType& encoder, const std::string& fieldName, int value) { encoder[fieldName] = value; }
   // Flag
   inline void setBit(ILCInputTraits::flagType& flag, int bit) { flag.setBit(bit); }
@@ -154,6 +159,8 @@ namespace SimDigital_Data {
   inline const std::string& getStringVal(const ILCInputTraits::parametersType& params, const std::string& key) { return params.getStringVal(key); }
   // Relation
   inline void createRelation(ILCInputTraits::relationType* &ptr, ILCInputTraits::calohitType* calohit, ILCInputTraits::simcalohitType* simhit, float weight) { ptr = new ILCInputTraits::relationType(calohit, simhit, weight); }
+  // CellIdEncoding
+  inline const char* getHiCellIDEncodingString() { return lcio::LCIO::CellIDEncoding; }
 
   //// WGGInputTraits ////
 
@@ -184,7 +191,7 @@ namespace SimDigital_Data {
   // MCParticle
   inline int getPDG(const WGGInputTraits::mcparticleType* particle) {return particle->_mcparticle->getPDG(); }
   // CellIDDecoder
-  inline lcio::long64 getValue(WGGInputTraits::celliddecoderType &decoder, WGGInputTraits::simcalohitType* simhit) { return decoder._decoder(simhit->_simhit).getValue(); }
+  inline WGGInputTraits::long64Type getValue(WGGInputTraits::celliddecoderType &decoder, WGGInputTraits::simcalohitType* simhit) { return decoder._decoder(simhit->_simhit).getValue(); }
   inline int getField(WGGInputTraits::celliddecoderType &decoder, WGGInputTraits::simcalohitType* simhit, const std::string& fieldName) { return decoder._decoder(simhit->_simhit)[fieldName]; }
   // CalorimeterHit
   inline void setRawHit(WGGInputTraits::calohitType* calohit, WGGInputTraits::simcalohitType* rawHit) { calohit->_calohit->setRawHit(rawHit->_simhit); }
@@ -204,7 +211,7 @@ namespace SimDigital_Data {
     ptr = std::move(p); }
   // CellIDEncoder
   inline void setcellID(WGGInputTraits::cellidencoderType& encoder, WGGInputTraits::calohitType* calohit) { encoder._encoder.setCellID(calohit->_calohit.get()); }
-  inline void setValue(WGGInputTraits::cellidencoderType& encoder, lcio::long64 value) { encoder._encoder.setValue(value); }
+  inline void setValue(WGGInputTraits::cellidencoderType& encoder, WGGInputTraits::long64Type value) { encoder._encoder.setValue(value); }
   inline void setField(WGGInputTraits::cellidencoderType& encoder, const std::string& fieldName, int value) { encoder._encoder[fieldName] = value; }
   // Flag
   inline void setBit(WGGInputTraits::flagType& flag, int bit) { flag._flag.setBit(bit); }
@@ -214,6 +221,7 @@ namespace SimDigital_Data {
   inline const std::string& getStringVal(const WGGInputTraits::parametersType& parameters, const std::string& key) { return parameters._params->getStringVal(key); }
   // Relation
   inline void createRelation(WGGInputTraits::relationType* &ptr, WGGInputTraits::calohitType* calohit, WGGInputTraits::simcalohitType* simhit, float weight) { ptr = new WGGInputTraits::relationType(calohit->_calohit.get(), simhit->_simhit, weight); }
+  // CellIdEncoding
 };
 
 #endif
